@@ -11,7 +11,7 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     fullName: "",
-    userType: "Player / Facility Owner",
+    role: "Player",
     profilePicture: null,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -184,7 +184,7 @@ const Register = () => {
         navigate("/otp-verification", {
           state: {
             email: formData.email,
-            userType: formData.userType,
+            role: formData.role,
             fullName: formData.fullName,
             password: formData.password,
             profilePicture: formData.profilePicture,
@@ -296,8 +296,8 @@ const Register = () => {
                     Sign up as <span className="text-red-500">*</span>
                   </label>
                   <select
-                    name="userType"
-                    value={formData.userType}
+                    name="role"
+                    value={formData.role}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-gray-50/50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 hover:bg-white"

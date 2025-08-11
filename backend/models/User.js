@@ -3,13 +3,11 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    // Firebase UID as the primary identifier
     _id: {
-      type: String, // Using Firebase UID as _id
+      type: String,
       required: true,
     },
 
-    // Basic user information
     firebaseUid: {
       type: String,
       required: true,
@@ -37,11 +35,24 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    // User type (Player, Facility Owner, or both)
-    userType: {
-      type: String,
-      enum: ["Player", "Facility Owner", "Player / Facility Owner"],
-      default: "Player / Facility Owner",
+    // Profile picture details for Cloudinary
+    profilePicture: {
+      publicId: {
+        type: String,
+        default: null,
+      },
+      url: {
+        type: String,
+        default: null,
+      },
+      thumbnailUrl: {
+        type: String,
+        default: null,
+      },
+      uploadedAt: {
+        type: Date,
+        default: null,
+      },
     },
 
     // Additional user profile data
@@ -100,8 +111,8 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["user", "admin", "moderator"],
-      default: "user",
+      enum: ["Player", "Facility Owner", "Player / Facility Owner"],
+      default: "Player",
     },
 
     // Firebase auth provider info
@@ -156,7 +167,6 @@ userSchema.index({ firebaseUid: 1 });
 userSchema.index({ "profile.firstName": 1, "profile.lastName": 1 });
 userSchema.index({ createdAt: -1 });
 userSchema.index({ lastActiveAt: -1 });
-userSchema.index({ userType: 1 });
 
 userSchema.virtual("fullName").get(function () {
   if (this.profile.firstName && this.profile.lastName) {

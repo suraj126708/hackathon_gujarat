@@ -4,6 +4,7 @@ import User from "../models/User.js";
 import { validationResult } from "express-validator";
 import emailService from "../config/email.js";
 import crypto from "crypto";
+import { deleteImage, getOptimizedImageUrl } from "../config/cloudinary.js";
 
 // @desc    Register user after Firebase auth
 // @route   POST /api/auth/register
@@ -19,8 +20,7 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    const { firstName, lastName, bio, preferences, userType } = req.body;
-
+    const { firstName, lastName, bio, preferences, role } = req.body;
     // User is already authenticated via middleware, so we have req.user
     const user = req.user;
 
@@ -28,8 +28,7 @@ export const registerUser = async (req, res) => {
     if (firstName) user.profile.firstName = firstName;
     if (lastName) user.profile.lastName = lastName;
     if (bio) user.profile.bio = bio;
-    if (userType) user.userType = userType;
-    if (userType) user.role = userType;
+    if (role) user.role = role;
 
     if (preferences) {
       // Update preferences if provided
@@ -93,6 +92,7 @@ export const getUserProfile = async (req, res) => {
       message: "User profile retrieved successfully",
       data: {
         user: user.toJSON(),
+        profilePicture: user.profilePicture,
         firebaseData: {
           uid: req.firebaseUser.uid,
           email: req.firebaseUser.email,
@@ -130,18 +130,13 @@ export const updateUserProfile = async (req, res) => {
       });
     }
 
-    const { displayName, profile, preferences, userType } = req.body;
+    const { displayName, profile, preferences, role } = req.body;
 
     const user = req.user;
 
     // Update basic profile
     if (displayName) {
       user.displayName = displayName;
-    }
-
-    // Update user type
-    if (userType) {
-      user.userType = userType;
     }
 
     // Update profile fields
@@ -171,6 +166,11 @@ export const updateUserProfile = async (req, res) => {
       }
     }
 
+    // Update role if provided
+    if (role) {
+      user.role = role;
+    }
+
     await user.save();
 
     res.status(200).json({
@@ -182,6 +182,197 @@ export const updateUserProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Update profile error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Something went wrong",
+    });
+  }
+};
+
+// @desc    Upload/Update profile picture
+// @route   POST /api/auth/profile-picture
+// @access  Private
+export const uploadProfilePicture = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No image file provided",
+      });
+    }
+
+    const user = req.user;
+
+    // Delete old profile picture if it exists
+    if (user.profilePicture.publicId) {
+      try {
+        await deleteImage(user.profilePicture.publicId);
+        console.log(
+          `✅ Old profile picture deleted: ${user.profilePicture.publicId}`
+        );
+      } catch (deleteError) {
+        console.error("❌ Failed to delete old profile picture:", deleteError);
+        // Continue with upload even if deletion fails
+      }
+    }
+
+    // Update user profile picture information
+    user.profilePicture = {
+      publicId: req.file.filename, // Cloudinary public ID
+      url: req.file.path, // Full resolution URL
+      thumbnailUrl: getOptimizedImageUrl(req.file.filename, {
+        width: 150,
+        height: 150,
+        crop: "fill",
+        gravity: "face",
+      }),
+      uploadedAt: new Date(),
+    };
+
+    // Also update the legacy photoURL field for compatibility
+    user.photoURL = user.profilePicture.url;
+
+    await user.save();
+
+    console.log(`✅ Profile picture updated for user: ${user._id}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Profile picture updated successfully",
+      data: {
+        profilePicture: user.profilePicture,
+        photoURL: user.photoURL,
+      },
+    });
+  } catch (error) {
+    console.error("Upload profile picture error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Something went wrong",
+    });
+  }
+};
+
+// @desc    Delete profile picture
+// @route   DELETE /api/auth/profile-picture
+// @access  Private
+export const deleteProfilePicture = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user.profilePicture.publicId) {
+      return res.status(400).json({
+        success: false,
+        message: "No profile picture to delete",
+      });
+    }
+
+    // Delete from Cloudinary
+    try {
+      await deleteImage(user.profilePicture.publicId);
+      console.log(
+        `✅ Profile picture deleted from Cloudinary: ${user.profilePicture.publicId}`
+      );
+    } catch (deleteError) {
+      console.error("❌ Failed to delete from Cloudinary:", deleteError);
+      // Continue with local cleanup even if Cloudinary deletion fails
+    }
+
+    // Clear profile picture fields
+    user.profilePicture = {
+      publicId: null,
+      url: null,
+      thumbnailUrl: null,
+      uploadedAt: null,
+    };
+    user.photoURL = null;
+
+    await user.save();
+
+    console.log(`✅ Profile picture removed for user: ${user._id}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Profile picture deleted successfully",
+      data: {
+        profilePicture: user.profilePicture,
+        photoURL: user.photoURL,
+      },
+    });
+  } catch (error) {
+    console.error("Delete profile picture error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Something went wrong",
+    });
+  }
+};
+
+// @desc    Get optimized profile picture URL
+// @route   GET /api/auth/profile-picture/:userId
+// @access  Public
+export const getProfilePicture = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { size = "medium", format = "auto" } = req.query;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.profilePicture.publicId) {
+      return res.status(404).json({
+        success: false,
+        message: "No profile picture found",
+      });
+    }
+
+    // Define size presets
+    const sizePresets = {
+      small: { width: 100, height: 100 },
+      medium: { width: 200, height: 200 },
+      large: { width: 400, height: 400 },
+      original: {},
+    };
+
+    const sizeOptions = sizePresets[size] || sizePresets.medium;
+
+    // Generate optimized URL
+    const optimizedUrl = getOptimizedImageUrl(user.profilePicture.publicId, {
+      ...sizeOptions,
+      crop: "fill",
+      gravity: "face",
+      quality: "auto",
+      format,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        url: optimizedUrl,
+        thumbnailUrl: user.profilePicture.thumbnailUrl,
+        originalUrl: user.profilePicture.url,
+        uploadedAt: user.profilePicture.uploadedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Get profile picture error:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",

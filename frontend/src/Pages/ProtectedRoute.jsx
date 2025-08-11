@@ -3,7 +3,11 @@ import React from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
-const ProtectedRoute = ({ children, requiredRole = null, requiredRoles = null }) => {
+const ProtectedRoute = ({
+  children,
+  requiredRole = null,
+  requiredRoles = null,
+}) => {
   const { user, loading, hasRole, hasAnyRole } = useAuth();
 
   if (loading) {

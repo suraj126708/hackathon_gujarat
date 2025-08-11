@@ -14,8 +14,7 @@ const OTPVerification = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const { phoneNumber, email, userType, fullName, password } =
-    location.state || {};
+  const { phoneNumber, email, fullName, password } = location.state || {};
   const { signUp } = useAuth();
 
   useEffect(() => {
@@ -92,7 +91,7 @@ const OTPVerification = () => {
 
       if (result.success) {
         // OTP verified successfully, now create the user account
-        const signUpResult = await signUp(email, password, fullName, userType);
+        const signUpResult = await signUp(email, password, fullName);
 
         if (signUpResult.success) {
           // If there's a profile picture, upload it
@@ -133,7 +132,6 @@ const OTPVerification = () => {
             state: {
               phoneNumber,
               email,
-              userType,
               fullName,
             },
           });
@@ -210,7 +208,6 @@ const OTPVerification = () => {
       state: {
         phoneNumber,
         email,
-        userType,
         fullName,
         password,
       },

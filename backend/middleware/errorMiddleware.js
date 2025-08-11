@@ -1,4 +1,5 @@
 // middlewares/errorMiddleware.js
+import { validationResult } from "express-validator";
 
 // Custom Error class
 export class AppError extends Error {
@@ -11,6 +12,36 @@ export class AppError extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 }
+
+// Validation middleware for express-validator
+export const validateRequest = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log("❌ [VALIDATION] Validation errors found:");
+    console.log("❌ [VALIDATION] Error count:", errors.array().length);
+    errors.array().forEach((error, index) => {
+      console.log(`❌ [VALIDATION] Error ${index + 1}:`, {
+        field: error.path,
+        message: error.msg,
+        value: error.value,
+        location: error.location,
+        type: error.type,
+      });
+    });
+
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors: errors.array().map((error) => ({
+        field: error.path,
+        message: error.msg,
+        value: error.value,
+      })),
+    });
+  }
+  console.log("✅ [VALIDATION] All validations passed successfully");
+  next();
+};
 
 // Error handling middleware
 export const errorHandler = (err, req, res, next) => {

@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 const RegisterSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { phoneNumber, email, userType, fullName } = location.state || {};
+  const { phoneNumber, email, fullName } = location.state || {};
 
   const handleContinue = () => {
     navigate("/home");
@@ -89,7 +89,7 @@ const RegisterSuccess = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">User Type:</span>
-                    <span className="font-medium">{userType}</span>
+                    <span className="font-medium">User</span>
                   </div>
                 </div>
               </div>

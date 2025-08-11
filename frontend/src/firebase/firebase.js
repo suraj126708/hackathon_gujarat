@@ -148,7 +148,7 @@ class AuthService {
   }
 
   // Register with email and password
-  async registerWithEmail(email, password, displayName, userType) {
+  async registerWithEmail(email, password, displayName) {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -168,13 +168,10 @@ class AuthService {
       axios.defaults.headers.common["Authorization"] = `Bearer ${idToken}`;
 
       // Complete registration with backend
-      if (userType) {
-        await this.completeRegistration({
-          displayName,
-          userType,
-          email,
-        });
-      }
+      await this.completeRegistration({
+        displayName,
+        email,
+      });
 
       return {
         success: true,
@@ -231,7 +228,6 @@ class AuthService {
             result.user.displayName || result.user.email?.split("@")[0],
           email: result.user.email,
           photoURL: result.user.photoURL,
-          userType: "Player", // Default user type for Google sign-up
           isEmailVerified: result.user.emailVerified,
         };
 

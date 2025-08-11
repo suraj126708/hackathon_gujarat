@@ -10,11 +10,15 @@ import {
   createCustomToken,
   requestPasswordReset,
   resetPassword,
+  uploadProfilePicture,
+  deleteProfilePicture,
+  getProfilePicture,
 } from "../controllers/authController.js";
 import {
   authenticateFirebaseToken,
   authorize,
 } from "../middleware/authMiddleware.js";
+import { upload } from "../config/cloudinary.js";
 
 const router = express.Router();
 
@@ -38,11 +42,11 @@ const profileValidation = [
     .optional()
     .isLength({ max: 500 })
     .withMessage("Bio must not exceed 500 characters"),
-  body("userType")
+  body("role")
     .optional()
     .isIn(["Player", "Facility Owner", "Player / Facility Owner"])
     .withMessage(
-      "User type must be Player, Facility Owner, or Player / Facility Owner"
+      "Role must be Player, Facility Owner, or Player / Facility Owner"
     ),
   body("preferences.theme")
     .optional()
@@ -56,11 +60,11 @@ const updateProfileValidation = [
     .trim()
     .isLength({ min: 1, max: 100 })
     .withMessage("Display name must be between 1 and 100 characters"),
-  body("userType")
+  body("role")
     .optional()
     .isIn(["Player", "Facility Owner", "Player / Facility Owner"])
     .withMessage(
-      "User type must be Player, Facility Owner, or Player / Facility Owner"
+      "Role must be Player, Facility Owner, or Player / Facility Owner"
     ),
   body("profile.firstName")
     .optional()
@@ -176,5 +180,29 @@ router.post("/forgot-password", forgotPasswordValidation, requestPasswordReset);
 // @desc    Reset password with token
 // @access  Public
 router.post("/reset-password", resetPasswordValidation, resetPassword);
+
+// @route   POST /api/auth/profile-picture
+// @desc    Upload/Update profile picture
+// @access  Private
+router.post(
+  "/profile-picture",
+  authenticateFirebaseToken,
+  upload.single("profilePicture"),
+  uploadProfilePicture
+);
+
+// @route   DELETE /api/auth/profile-picture
+// @desc    Delete profile picture
+// @access  Private
+router.delete(
+  "/profile-picture",
+  authenticateFirebaseToken,
+  deleteProfilePicture
+);
+
+// @route   GET /api/auth/profile-picture/:userId
+// @desc    Get optimized profile picture URL
+// @access  Public
+router.get("/profile-picture/:userId", getProfilePicture);
 
 export default router;
