@@ -435,11 +435,14 @@ const ProfileOwner = () => {
       );
 
       // Try to fetch all grounds and filter by owner
-      const response = await fetch(`http://localhost:5000/api/grounds`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `https://hackathon-gujarat.onrender.com/api/grounds`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -485,7 +488,9 @@ const ProfileOwner = () => {
   const testFetchAllGrounds = async () => {
     try {
       console.log("🔍 [DEBUG] Testing fetch all grounds...");
-      const response = await fetch(`http://localhost:5000/api/grounds`);
+      const response = await fetch(
+        `https://hackathon-gujarat.onrender.com/api/grounds`
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -549,7 +554,9 @@ const ProfileOwner = () => {
   const testFetchAllGroundsNoAuth = async () => {
     try {
       console.log("🔍 [DEBUG] Testing fetch all grounds without auth...");
-      const response = await fetch(`http://localhost:5000/api/grounds`);
+      const response = await fetch(
+        `https://hackathon-gujarat.onrender.com/api/grounds`
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

@@ -1,4 +1,6 @@
 // src/Pages/AdminDashboard.jsx
+// This component uses mock data for analytics charts to ensure consistent data display
+// Mock data is prioritized over API data for better user experience and consistent analytics
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -961,28 +963,32 @@ const AdminDashboard = () => {
     const chartRefreshInterval = setInterval(() => {
       console.log("Refreshing chart data...");
 
-      // Generate fresh chart data with current state
-      if (Object.keys(userStats).length > 0) {
-        setUserRegistrationTrends(generateUserRegistrationTrends(userStats));
-      }
-      if (Object.keys(facilityAnalytics).length > 0) {
-        setFacilityApprovalTrends(
-          generateFacilityApprovalTrends(facilityAnalytics)
-        );
-      }
-      if (Object.keys(sportsAnalytics).length > 0) {
-        setSportsPopularityData(generateSportsPopularityData(sportsAnalytics));
-      }
-      if (Object.keys(earningsAnalytics).length > 0) {
-        setEarningsTrendData(generateEarningsTrendData(earningsAnalytics));
-      }
-      setBookingActivityData(generateBookingActivityData());
+      // Generate fresh chart data with mock data for consistent analytics
+      const mockData = generateMockAnalyticsData();
+
+      // Use mock data for user trends
+      const userTrends =
+        adminService.getMockUserStats().data.monthlyTrends ||
+        generateUserRegistrationTrends(userStats);
+      setUserRegistrationTrends(userTrends);
+
+      // Use mock data for facility trends
+      const facilityTrends =
+        adminService.getMockFacilityAnalytics().data.approvalTrends ||
+        generateFacilityApprovalTrends(facilityAnalytics);
+      setFacilityApprovalTrends(facilityTrends);
+
+      // Use mock data for sports and earnings analytics
+      setSportsPopularityData(mockData.sportsPopularityData);
+      setEarningsTrendData(mockData.earningsTrendData);
+      setBookingActivityData(mockData.bookingActivityData);
+
       setLastChartUpdate(new Date());
 
       // Show refresh notification
       setMessage({
         type: "info",
-        text: "Chart data automatically refreshed!",
+        text: "Chart data automatically refreshed with mock data!",
       });
       clearMessageAfterDelay(2000);
     }, 5 * 60 * 1000); // 5 minutes
@@ -1026,6 +1032,20 @@ const AdminDashboard = () => {
           : item.revenue,
       };
     });
+  };
+
+  // Generate mock data for analytics section
+  const generateMockAnalyticsData = () => {
+    const mockSportsData =
+      adminService.getMockSportsAnalytics().data.mostActiveSports;
+    const mockEarningsData =
+      adminService.getMockEarningsAnalytics().data.monthlyTrend;
+
+    return {
+      sportsPopularityData: mockSportsData,
+      earningsTrendData: mockEarningsData,
+      bookingActivityData: generateBookingActivityData(),
+    };
   };
 
   if (!user || !userProfile) {
@@ -1077,41 +1097,44 @@ const AdminDashboard = () => {
                     </h3>
                     <button
                       onClick={() => {
-                        // Refresh chart data with random variations for dynamic feel
-                        if (Object.keys(userStats).length > 0) {
-                          const userTrends =
-                            generateUserRegistrationTrends(userStats);
-                          setUserRegistrationTrends(
-                            addRandomVariations(userTrends, 0.15)
-                          );
-                        }
-                        if (Object.keys(facilityAnalytics).length > 0) {
-                          const facilityTrends =
-                            generateFacilityApprovalTrends(facilityAnalytics);
-                          setFacilityApprovalTrends(
-                            addRandomVariations(facilityTrends, 0.15)
-                          );
-                        }
-                        if (Object.keys(sportsAnalytics).length > 0) {
-                          const sportsData =
-                            generateSportsPopularityData(sportsAnalytics);
-                          setSportsPopularityData(
-                            addRandomVariations(sportsData, 0.15)
-                          );
-                        }
-                        if (Object.keys(earningsAnalytics).length > 0) {
-                          const earningsData =
-                            generateEarningsTrendData(earningsAnalytics);
-                          setEarningsTrendData(
-                            addRandomVariations(earningsData, 0.15)
-                          );
-                        }
-                        setBookingActivityData(generateBookingActivityData());
+                        // Refresh chart data with mock data and random variations for dynamic feel
+                        const mockData = generateMockAnalyticsData();
+
+                        // Use mock data for user trends
+                        const userTrends =
+                          adminService.getMockUserStats().data.monthlyTrends ||
+                          generateUserRegistrationTrends(userStats);
+                        setUserRegistrationTrends(
+                          addRandomVariations(userTrends, 0.15)
+                        );
+
+                        // Use mock data for facility trends
+                        const facilityTrends =
+                          adminService.getMockFacilityAnalytics().data
+                            .approvalTrends ||
+                          generateFacilityApprovalTrends(facilityAnalytics);
+                        setFacilityApprovalTrends(
+                          addRandomVariations(facilityTrends, 0.15)
+                        );
+
+                        // Use mock data for sports analytics
+                        const sportsData = mockData.sportsPopularityData;
+                        setSportsPopularityData(
+                          addRandomVariations(sportsData, 0.15)
+                        );
+
+                        // Use mock data for earnings analytics
+                        const earningsData = mockData.earningsTrendData;
+                        setEarningsTrendData(
+                          addRandomVariations(earningsData, 0.15)
+                        );
+
+                        setBookingActivityData(mockData.bookingActivityData);
 
                         setLastChartUpdate(new Date());
                         setMessage({
                           type: "success",
-                          text: "Chart data refreshed with dynamic variations!",
+                          text: "Chart data refreshed with mock data and dynamic variations!",
                         });
                         clearMessageAfterDelay(3000);
                       }}
@@ -1122,8 +1145,18 @@ const AdminDashboard = () => {
                     </button>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    <UserRegistrationChart data={userRegistrationTrends} />
-                    <FacilityApprovalChart data={facilityApprovalTrends} />
+                    <UserRegistrationChart
+                      data={
+                        adminService.getMockUserStats().data.monthlyTrends ||
+                        userRegistrationTrends
+                      }
+                    />
+                    <FacilityApprovalChart
+                      data={
+                        adminService.getMockFacilityAnalytics().data
+                          .approvalTrends || facilityApprovalTrends
+                      }
+                    />
                   </div>
 
                   {/* Chart Update Timestamp */}
@@ -1168,9 +1201,13 @@ const AdminDashboard = () => {
 
             {activeView === "analytics" && (
               <AnalyticsSection
-                sportsPopularityData={sportsPopularityData}
-                earningsTrendData={earningsTrendData}
-                bookingActivityData={bookingActivityData}
+                sportsPopularityData={
+                  adminService.getMockSportsAnalytics().data.mostActiveSports
+                }
+                earningsTrendData={
+                  adminService.getMockEarningsAnalytics().data.monthlyTrend
+                }
+                bookingActivityData={generateBookingActivityData()}
               />
             )}
 

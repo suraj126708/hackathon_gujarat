@@ -35,6 +35,8 @@ const ProfileRedirect = () => {
 
   if (userProfile?.role === "Facility Owner") {
     return <Navigate to="/owner-profile" replace />;
+  } else if (userProfile?.role === "admin") {
+    return <Navigate to="/admin" replace />;
   } else {
     return <Navigate to="/user-profile" replace />;
   }
