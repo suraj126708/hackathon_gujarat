@@ -85,7 +85,7 @@ const Register = () => {
     if (file) {
       if (file.size > 1024 * 1024 * 10) {
         // 1MB limit
-        setError("Image file size should be less than 1MB");
+        setError("Image file size should be less than 10MB");
         return;
       }
       setFormData((prev) => ({
