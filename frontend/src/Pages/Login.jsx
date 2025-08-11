@@ -62,7 +62,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100">
+    <div className="min-h-screen bg-gradient-to-br  from-green-50 via-white to-green-100">
       {/* Desktop Split Layout / Mobile Full Width */}
       <div className="min-h-screen flex">
         {/* Form Section */}

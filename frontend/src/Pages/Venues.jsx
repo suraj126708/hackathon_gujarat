@@ -479,7 +479,7 @@ const Venues = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pt-28 bg-gray-50">
       <div className="flex flex-col lg:flex-row">
         {/* Sidebar */}
         <aside

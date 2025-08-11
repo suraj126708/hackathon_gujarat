@@ -73,6 +73,15 @@ const Landing = () => {
       }
     }
 
+    @keyframes scrollInfinite {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
     .animate-slide-in-up {
       animation: slideInUp 0.6s ease-out forwards;
     }
@@ -88,6 +97,58 @@ const Landing = () => {
     .animate-float-delayed {
       animation: floatDelayed 3s ease-in-out infinite;
       animation-delay: 1s;
+    }
+
+    .sports-scroll {
+      animation: scrollInfinite 30s linear infinite;
+      display: flex;
+      width: 200%;
+    }
+
+    .sports-container:hover .sports-scroll {
+      animation-play-state: paused;
+    }
+
+    @keyframes scrollLeftToRight {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    @keyframes scrollRightToLeft {
+      0% {
+        transform: translateX(-50%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+
+    .testimonial-scroll-left {
+      animation: scrollLeftToRight 30s linear infinite;
+      display: flex;
+      width: 200%;
+    }
+
+    .testimonial-scroll-right {
+      animation: scrollRightToLeft 30s linear infinite;
+      display: flex;
+      width: 200%;
+    }
+
+    .testimonial-container:hover .testimonial-scroll-left,
+    .testimonial-container:hover .testimonial-scroll-right {
+      animation-play-state: paused;
+    }
+
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -141,13 +202,6 @@ const Landing = () => {
                     : "-translate-x-10 opacity-0"
                 }`}
               >
-                <div className="mb-6">
-                  <span className="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-800 text-sm font-semibold mb-4">
-                    <Zap className="w-4 h-4 mr-2" />
-                    Find Players & Venues Nearby
-                  </span>
-                </div>
-
                 <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
                   YOUR ONE STOP
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-blue-600 block">
@@ -281,78 +335,158 @@ const Landing = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {[
-                {
-                  icon: "🏸",
-                  name: "Badminton",
-                  image:
-                    "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-                  color: "from-red-500 to-pink-500",
-                },
-                {
-                  icon: "⚽",
-                  name: "Football",
-                  image:
-                    "https://images.unsplash.com/photo-1553778263-73a83bab9b0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-                  color: "from-green-500 to-emerald-500",
-                },
-                {
-                  icon: "🏏",
-                  name: "Cricket",
-                  image:
-                    "https://images.unsplash.com/photo-1531415074968-036ba1b575da?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-                  color: "from-blue-500 to-cyan-500",
-                },
-                {
-                  icon: "🏊‍♂️",
-                  name: "Swimming",
-                  image:
-                    "https://images.unsplash.com/photo-1530549387789-4c1017266635?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-                  color: "from-blue-400 to-blue-600",
-                },
-                {
-                  icon: "🎾",
-                  name: "Tennis",
-                  image:
-                    "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-                  color: "from-yellow-500 to-orange-500",
-                },
-                {
-                  icon: "🏓",
-                  name: "Table Tennis",
-                  image:
-                    "https://images.unsplash.com/photo-1571816119107-07542b3d73dc?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
-                  color: "from-purple-500 to-indigo-500",
-                },
-              ].map((sport, index) => (
-                <div
-                  key={index}
-                  className={`group relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer overflow-hidden ${
-                    isLoaded ? "animate-slide-in-up" : "opacity-0"
-                  }`}
-                  style={{
-                    animationDelay: `${index * 100}ms`,
-                  }}
-                >
-                  <div className="relative h-32 overflow-hidden">
-                    <img
-                      src={sport.image}
-                      alt={sport.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
+            <div className="sports-container overflow-hidden relative">
+              <div className="sports-scroll gap-6">
+                {/* First set of cards */}
+                <div className="flex gap-6 flex-shrink-0">
+                  {[
+                    {
+                      icon: "🏸",
+                      name: "Badminton",
+                      image:
+                        "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-red-500 to-pink-500",
+                    },
+                    {
+                      icon: "⚽",
+                      name: "Football",
+                      image:
+                        "https://images.unsplash.com/photo-1553778263-73a83bab9b0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-green-500 to-emerald-500",
+                    },
+                    {
+                      icon: "🏏",
+                      name: "Cricket",
+                      image:
+                        "https://images.unsplash.com/photo-1531415074968-036ba1b575da?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-blue-500 to-cyan-500",
+                    },
+                    {
+                      icon: "🏊‍♂️",
+                      name: "Swimming",
+                      image:
+                        "https://images.unsplash.com/photo-1530549387789-4c1017266635?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-blue-400 to-blue-600",
+                    },
+                    {
+                      icon: "🎾",
+                      name: "Tennis",
+                      image:
+                        "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-yellow-500 to-orange-500",
+                    },
+                    {
+                      icon: "🏓",
+                      name: "Table Tennis",
+                      image:
+                        "https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-purple-500 to-indigo-500",
+                    },
+                  ].map((sport, index) => (
                     <div
-                      className={`absolute inset-0 bg-gradient-to-t ${sport.color} opacity-60`}
-                    ></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-4xl">{sport.icon}</span>
+                      key={`first-${index}`}
+                      className={`group relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer overflow-hidden flex-shrink-0 w-72 ${
+                        isLoaded ? "animate-slide-in-up" : "opacity-0"
+                      }`}
+                      style={{
+                        animationDelay: `${index * 100}ms`,
+                      }}
+                    >
+                      <div className="relative h-56 overflow-hidden">
+                        <img
+                          src={sport.image}
+                          alt={sport.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-t ${sport.color} opacity-60`}
+                        ></div>
+                        {/* Sport name on top of image */}
+                        <div className="absolute top-3 left-3 right-3 transition-all duration-300 group-hover:top-1/2 group-hover:left-1/2 group-hover:right-auto group-hover:transform group-hover:-translate-x-1/2 group-hover:-translate-y-1/2">
+                          <h3 className="font-bold text-white text-lg drop-shadow-lg transition-all duration-300 group-hover:text-2xl group-hover:text-center">
+                            {sport.name}
+                          </h3>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-4 text-center">
-                    <p className="font-semibold text-gray-900">{sport.name}</p>
-                  </div>
+                  ))}
                 </div>
-              ))}
+
+                {/* Second set of cards (duplicate for seamless loop) */}
+                <div className="flex gap-6 flex-shrink-0">
+                  {[
+                    {
+                      icon: "🏸",
+                      name: "Badminton",
+                      image:
+                        "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-red-500 to-pink-500",
+                    },
+                    {
+                      icon: "⚽",
+                      name: "Football",
+                      image:
+                        "https://images.unsplash.com/photo-1553778263-73a83bab9b0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-green-500 to-emerald-500",
+                    },
+                    {
+                      icon: "🏏",
+                      name: "Cricket",
+                      image:
+                        "https://images.unsplash.com/photo-1531415074968-036ba1b575da?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-blue-500 to-cyan-500",
+                    },
+                    {
+                      icon: "🏊‍♂️",
+                      name: "Swimming",
+                      image:
+                        "https://images.unsplash.com/photo-1530549387789-4c1017266635?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-blue-400 to-blue-600",
+                    },
+                    {
+                      icon: "🎾",
+                      name: "Tennis",
+                      image:
+                        "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-yellow-500 to-orange-500",
+                    },
+                    {
+                      icon: "🏓",
+                      name: "Table Tennis",
+                      image:
+                        "https://images.unsplash.com/photo-1609710228159-0fa9bd7c0827?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+                      color: "from-purple-500 to-indigo-500",
+                    },
+                  ].map((sport, index) => (
+                    <div
+                      key={`second-${index}`}
+                      className={`group relative bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer overflow-hidden flex-shrink-0 w-72 ${
+                        isLoaded ? "animate-slide-in-up" : "opacity-0"
+                      }`}
+                      style={{
+                        animationDelay: `${index * 100}ms`,
+                      }}
+                    >
+                      <div className="relative h-56 overflow-hidden">
+                        <img
+                          src={sport.image}
+                          alt={sport.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div
+                          className={`absolute inset-0 bg-gradient-to-t ${sport.color} opacity-60`}
+                        ></div>
+                        {/* Sport name on top of image */}
+                        <div className="absolute top-3 left-3 right-3 transition-all duration-300 group-hover:top-1/2 group-hover:left-1/2 group-hover:right-auto group-hover:transform group-hover:-translate-x-1/2 group-hover:-translate-y-1/2">
+                          <h3 className="font-bold text-white text-lg drop-shadow-lg transition-all duration-300 group-hover:text-2xl group-hover:text-center">
+                            {sport.name}
+                          </h3>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -441,62 +575,306 @@ const Landing = () => {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  name: "Arjun Sharma",
-                  role: "Cricket Enthusiast",
-                  image:
-                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
-                  text: "QuickCourt made it so easy to find quality cricket grounds. The booking process is seamless!",
-                },
-                {
-                  name: "Priya Patel",
-                  role: "Badminton Player",
-                  image:
-                    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
-                  text: "I've found amazing badminton partners through this platform. The community is fantastic!",
-                },
-                {
-                  name: "Rohit Kumar",
-                  role: "Football Coach",
-                  image:
-                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
-                  text: "As a coach, I love how easy it is to book grounds for my team. Highly recommended!",
-                },
-              ].map((testimonial, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-50 rounded-3xl p-8 hover:bg-white hover:shadow-lg transition-all duration-300"
-                >
-                  <div className="flex items-center mb-6">
-                    <img
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      className="w-16 h-16 rounded-full object-cover mr-4"
-                    />
-                    <div>
-                      <h4 className="font-bold text-gray-900">
-                        {testimonial.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {testimonial.role}
+            {/* First Row - Left to Right */}
+            <div className="testimonial-container overflow-hidden mb-8">
+              <div className="testimonial-scroll-left gap-8">
+                {/* First set */}
+                <div className="flex gap-8 flex-shrink-0">
+                  {[
+                    {
+                      name: "Arjun Sharma",
+                      role: "Cricket Captain",
+                      image:
+                        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "QuickCourt made it so easy to find quality cricket grounds. The booking process is seamless!",
+                    },
+                    {
+                      name: "Priya Patel",
+                      role: "Badminton Champion",
+                      image:
+                        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "I've found amazing badminton partners through this platform. The community is fantastic!",
+                    },
+                    {
+                      name: "Rohit Kumar",
+                      role: "Football Coach",
+                      image:
+                        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "As a coach, I love how easy it is to book grounds for my team. Highly recommended!",
+                    },
+                    {
+                      name: "Sneha Singh",
+                      role: "Tennis Player",
+                      image:
+                        "https://images.unsplash.com/photo-1494790108755-2616b612b8c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "The tennis courts available here are top-notch. Perfect for improving my game!",
+                    },
+                    {
+                      name: "Vikram Joshi",
+                      role: "Swimming Instructor",
+                      image:
+                        "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Amazing swimming facilities! The booking system is super convenient for my classes.",
+                    },
+                  ].map((testimonial, index) => (
+                    <div
+                      key={`top-first-${index}`}
+                      className="bg-gray-50 rounded-3xl p-6 hover:bg-white hover:shadow-lg transition-all duration-300 flex-shrink-0 w-80 h-48"
+                    >
+                      <div className="flex items-center mb-4">
+                        <img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="w-12 h-12 rounded-full object-cover mr-3"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-gray-900 text-sm truncate">
+                            {testimonial.name}
+                          </h4>
+                          <p className="text-xs text-gray-600 truncate">
+                            {testimonial.role}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-gray-700 italic leading-relaxed text-sm line-clamp-3 mb-3 whitespace-normal">
+                        "{testimonial.text}"
                       </p>
+                      <div className="flex mt-3">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="w-4 h-4 text-yellow-500 fill-current"
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-gray-700 italic leading-relaxed">
-                    "{testimonial.text}"
-                  </p>
-                  <div className="flex mt-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="w-5 h-5 text-yellow-500 fill-current"
-                      />
-                    ))}
-                  </div>
+                  ))}
                 </div>
-              ))}
+
+                {/* Second set (duplicate) */}
+                <div className="flex gap-8 flex-shrink-0">
+                  {[
+                    {
+                      name: "Arjun Sharma",
+                      role: "Cricket Captain",
+                      image:
+                        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "QuickCourt made it so easy to find quality cricket grounds. The booking process is seamless!",
+                    },
+                    {
+                      name: "Priya Patel",
+                      role: "Badminton Champion",
+                      image:
+                        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "I've found amazing badminton partners through this platform. The community is fantastic!",
+                    },
+                    {
+                      name: "Rohit Kumar",
+                      role: "Football Coach",
+                      image:
+                        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "As a coach, I love how easy it is to book grounds for my team. Highly recommended!",
+                    },
+                    {
+                      name: "Sneha Singh",
+                      role: "Tennis Player",
+                      image:
+                        "https://images.unsplash.com/photo-1494790108755-2616b612b8c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "The tennis courts available here are top-notch. Perfect for improving my game!",
+                    },
+                    {
+                      name: "Vikram Joshi",
+                      role: "Swimming Instructor",
+                      image:
+                        "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Amazing swimming facilities! The booking system is super convenient for my classes.",
+                    },
+                  ].map((testimonial, index) => (
+                    <div
+                      key={`top-second-${index}`}
+                      className="bg-gray-50 rounded-3xl p-6 hover:bg-white hover:shadow-lg transition-all duration-300 flex-shrink-0 w-80"
+                    >
+                      <div className="flex items-center mb-4">
+                        <img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="w-12 h-12 rounded-full object-cover mr-3"
+                        />
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-sm">
+                            {testimonial.name}
+                          </h4>
+                          <p className="text-xs text-gray-600">
+                            {testimonial.role}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-gray-700 italic leading-relaxed text-sm">
+                        "{testimonial.text}"
+                      </p>
+                      <div className="flex mt-3">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="w-4 h-4 text-yellow-500 fill-current"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Second Row - Right to Left */}
+            <div className="testimonial-container overflow-hidden">
+              <div className="testimonial-scroll-right gap-8">
+                {/* First set */}
+                <div className="flex gap-8 flex-shrink-0">
+                  {[
+                    {
+                      name: "Karan Mehta",
+                      role: "Basketball Player",
+                      image:
+                        "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Perfect basketball courts with great lighting. Night games have never been better!",
+                    },
+                    {
+                      name: "Ananya Reddy",
+                      role: "Table Tennis Pro",
+                      image:
+                        "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "The table tennis facilities are world-class. Equipment quality is outstanding!",
+                    },
+                    {
+                      name: "Suresh Iyer",
+                      role: "Volleyball Captain",
+                      image:
+                        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Our volleyball team loves the sand courts here. Perfect for beach volleyball!",
+                    },
+                    {
+                      name: "Maya Gupta",
+                      role: "Squash Enthusiast",
+                      image:
+                        "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Clean, well-maintained squash courts. The air conditioning is a game-changer!",
+                    },
+                    {
+                      name: "Raj Malhotra",
+                      role: "Hockey Coach",
+                      image:
+                        "https://images.unsplash.com/photo-1463453091185-61582044d556?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Excellent hockey field with proper turf. My players perform at their best here!",
+                    },
+                  ].map((testimonial, index) => (
+                    <div
+                      key={`bottom-first-${index}`}
+                      className="bg-gray-50 rounded-3xl p-6 hover:bg-white hover:shadow-lg transition-all duration-300 flex-shrink-0 w-80"
+                    >
+                      <div className="flex items-center mb-4">
+                        <img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="w-12 h-12 rounded-full object-cover mr-3"
+                        />
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-sm">
+                            {testimonial.name}
+                          </h4>
+                          <p className="text-xs text-gray-600">
+                            {testimonial.role}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-gray-700 italic leading-relaxed text-sm">
+                        "{testimonial.text}"
+                      </p>
+                      <div className="flex mt-3">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="w-4 h-4 text-yellow-500 fill-current"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Second set (duplicate) */}
+                <div className="flex gap-8 flex-shrink-0">
+                  {[
+                    {
+                      name: "Karan Mehta",
+                      role: "Basketball Player",
+                      image:
+                        "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Perfect basketball courts with great lighting. Night games have never been better!",
+                    },
+                    {
+                      name: "Ananya Reddy",
+                      role: "Table Tennis Pro",
+                      image:
+                        "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "The table tennis facilities are world-class. Equipment quality is outstanding!",
+                    },
+                    {
+                      name: "Suresh Iyer",
+                      role: "Volleyball Captain",
+                      image:
+                        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Our volleyball team loves the sand courts here. Perfect for beach volleyball!",
+                    },
+                    {
+                      name: "Maya Gupta",
+                      role: "Squash Enthusiast",
+                      image:
+                        "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Clean, well-maintained squash courts. The air conditioning is a game-changer!",
+                    },
+                    {
+                      name: "Raj Malhotra",
+                      role: "Hockey Coach",
+                      image:
+                        "https://images.unsplash.com/photo-1463453091185-61582044d556?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
+                      text: "Excellent hockey field with proper turf. My players perform at their best here!",
+                    },
+                  ].map((testimonial, index) => (
+                    <div
+                      key={`bottom-second-${index}`}
+                      className="bg-gray-50 rounded-3xl p-6 hover:bg-white hover:shadow-lg transition-all duration-300 flex-shrink-0 w-80"
+                    >
+                      <div className="flex items-center mb-4">
+                        <img
+                          src={testimonial.image}
+                          alt={testimonial.name}
+                          className="w-12 h-12 rounded-full object-cover mr-3"
+                        />
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-sm">
+                            {testimonial.name}
+                          </h4>
+                          <p className="text-xs text-gray-600">
+                            {testimonial.role}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-gray-700 italic leading-relaxed text-sm">
+                        "{testimonial.text}"
+                      </p>
+                      <div className="flex mt-3">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="w-4 h-4 text-yellow-500 fill-current"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>

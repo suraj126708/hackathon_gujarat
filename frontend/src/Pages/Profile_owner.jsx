@@ -73,6 +73,10 @@ const ProfileOwner = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
+  // Check if user is an owner
+  const isOwner = userProfile?.role === "Facility Owner";
+  const isPlayer = userProfile?.role === "Player" || !userProfile?.role;
+
   // Data states
   const [grounds, setGrounds] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -207,12 +211,12 @@ const ProfileOwner = () => {
     fetchOwnerData();
   }, []);
 
-  // Prepare chart data when grounds data changes
+  // Prepare chart data when data changes
   useEffect(() => {
-    if (grounds.length > 0) {
+    if (grounds.length > 0 || bookings.length > 0 || reviews.length > 0) {
       prepareChartData();
     }
-  }, [grounds]);
+  }, [grounds, bookings, reviews, monthlyAnalytics]);
 
   const fetchOwnerData = async () => {
     setLoading(true);
@@ -629,6 +633,10 @@ const ProfileOwner = () => {
 
   const handleRefresh = () => {
     fetchOwnerData();
+    // Refresh chart data after a short delay to ensure new data is loaded
+    setTimeout(() => {
+      prepareChartData();
+    }, 1000);
   };
 
   const handleGroundStatusUpdate = async (groundId, newStatus) => {
@@ -776,47 +784,159 @@ const ProfileOwner = () => {
 
   // Chart data preparation functions
   const prepareChartData = () => {
-    // Prepare revenue chart data (last 6 months)
+    // Prepare revenue chart data (last 6 months) - use real data when available
     const revenueData = [];
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthName = date.toLocaleDateString("en-US", { month: "short" });
+      const monthYear = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`;
+
+      // Try to find real data for this month
+      let monthRevenue = 0;
+      if (
+        monthlyAnalytics.currentMonth &&
+        monthYear ===
+          `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+      ) {
+        monthRevenue = monthlyAnalytics.currentMonth.revenue || 0;
+      } else if (
+        monthlyAnalytics.previousMonth &&
+        monthYear ===
+          `${now.getFullYear()}-${String(now.getMonth()).padStart(2, "0")}`
+      ) {
+        monthRevenue = monthlyAnalytics.previousMonth.revenue || 0;
+      } else {
+        // Calculate from bookings data if available
+        const monthBookings = bookings.filter((booking) => {
+          const bookingDate = new Date(booking.date);
+          return (
+            bookingDate.getMonth() === date.getMonth() &&
+            bookingDate.getFullYear() === date.getFullYear() &&
+            booking.status === "confirmed"
+          );
+        });
+        monthRevenue = monthBookings.reduce(
+          (sum, booking) => sum + (booking.amount || 0),
+          0
+        );
+      }
+
       revenueData.push({
         month: monthName,
-        revenue: Math.floor(Math.random() * 50000) + 10000, // Mock data for now
+        revenue: monthRevenue,
+        year: date.getFullYear(),
       });
     }
     setRevenueChartData(revenueData);
 
-    // Prepare bookings chart data
+    // Prepare bookings chart data - use real data
     const bookingsData = [];
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthName = date.toLocaleDateString("en-US", { month: "short" });
+      const monthYear = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`;
+
+      // Try to find real data for this month
+      let monthBookings = 0;
+      if (
+        monthlyAnalytics.currentMonth &&
+        monthYear ===
+          `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+      ) {
+        monthBookings = monthlyAnalytics.currentMonth.bookings || 0;
+      } else if (
+        monthlyAnalytics.previousMonth &&
+        monthYear ===
+          `${now.getFullYear()}-${String(now.getMonth()).padStart(2, "0")}`
+      ) {
+        monthBookings = monthlyAnalytics.previousMonth.bookings || 0;
+      } else {
+        // Calculate from actual bookings data
+        const monthBookingsData = bookings.filter((booking) => {
+          const bookingDate = new Date(booking.date);
+          return (
+            bookingDate.getMonth() === date.getMonth() &&
+            bookingDate.getFullYear() === date.getFullYear()
+          );
+        });
+        monthBookings = monthBookingsData.length;
+      }
+
       bookingsData.push({
         month: monthName,
-        bookings: Math.floor(Math.random() * 100) + 20, // Mock data for now
+        bookings: monthBookings,
+        year: date.getFullYear(),
       });
     }
     setBookingsChartData(bookingsData);
 
-    // Prepare ground performance data
-    const performanceData = grounds.map((ground) => ({
-      name: ground.name,
-      bookings: ground.totalBookings || 0,
-      revenue: ground.monthlyRevenue || 0,
-      rating: ground.rating || 0,
-    }));
+    // Prepare ground performance data - use real data from grounds
+    const performanceData = grounds.map((ground) => {
+      // Calculate actual bookings for this ground
+      const groundBookings = bookings.filter(
+        (booking) =>
+          booking.groundId === (ground.groundId || ground.id) ||
+          booking.groundName === ground.name
+      );
+
+      // Calculate actual revenue for this ground
+      const groundRevenue = groundBookings
+        .filter((booking) => booking.status === "confirmed")
+        .reduce((sum, booking) => sum + (booking.amount || 0), 0);
+
+      // Calculate average rating for this ground
+      const groundReviews = reviews.filter(
+        (review) =>
+          review.groundId === (ground.groundId || ground.id) ||
+          review.groundName === ground.name
+      );
+      const averageRating =
+        groundReviews.length > 0
+          ? groundReviews.reduce(
+              (sum, review) => sum + (review.rating || 0),
+              0
+            ) / groundReviews.length
+          : 0;
+
+      return {
+        name: ground.name,
+        bookings: groundBookings.length,
+        revenue: groundRevenue,
+        rating: averageRating,
+        totalReviews: groundReviews.length,
+      };
+    });
     setGroundPerformanceData(performanceData);
 
-    // Prepare review distribution data
+    // Prepare review distribution data - use real data from reviews
+    const reviewDistribution = {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
+    };
+
+    reviews.forEach((review) => {
+      const rating = review.rating || 0;
+      if (rating >= 5) reviewDistribution[5]++;
+      else if (rating >= 4) reviewDistribution[4]++;
+      else if (rating >= 3) reviewDistribution[3]++;
+      else if (rating >= 2) reviewDistribution[2]++;
+      else if (rating >= 1) reviewDistribution[1]++;
+    });
+
     const reviewData = [
-      { name: "5 Stars", value: Math.floor(Math.random() * 50) + 20 },
-      { name: "4 Stars", value: Math.floor(Math.random() * 30) + 15 },
-      { name: "3 Stars", value: Math.floor(Math.random() * 20) + 10 },
-      { name: "2 Stars", value: Math.floor(Math.random() * 10) + 5 },
-      { name: "1 Star", value: Math.floor(Math.random() * 5) + 1 },
+      { name: "5 Stars", value: reviewDistribution[5] },
+      { name: "4 Stars", value: reviewDistribution[4] },
+      { name: "3 Stars", value: reviewDistribution[3] },
+      { name: "2 Stars", value: reviewDistribution[2] },
+      { name: "1 Star", value: reviewDistribution[1] },
     ];
     setReviewDistributionData(reviewData);
   };

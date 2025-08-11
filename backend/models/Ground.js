@@ -227,7 +227,7 @@ groundSchema.virtual("fullAddress").get(function () {
 
 // Virtual for ground area
 groundSchema.virtual("groundArea").get(function () {
-  if (this.dimensions.length && this.dimensions.width) {
+  if (this.dimensions && this.dimensions.length && this.dimensions.width) {
     return this.dimensions.length * this.dimensions.width;
   }
   return null;

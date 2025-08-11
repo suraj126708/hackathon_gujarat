@@ -2,6 +2,8 @@
 import express from "express";
 import { body, param } from "express-validator";
 import {
+  getAdminDashboard,
+  getSystemStats,
   getAllUsers,
   getUserById,
   updateUserRole,
@@ -11,6 +13,14 @@ import {
   promoteToAdmin,
   demoteFromAdmin,
   // bulkUpdateRoles,
+  getPendingFacilities,
+  approveFacility,
+  rejectFacility,
+  getAllFacilities,
+  updateFacilityStatus,
+  getFacilityAnalytics,
+  getSportsAnalytics,
+  getEarningsAnalytics,
 } from "../controllers/adminController.js";
 import {
   authenticateFirebaseToken,
@@ -34,8 +44,10 @@ const roleValidation = [
   body("role")
     .notEmpty()
     .withMessage("Role is required")
-    .isIn(["user", "admin", "moderator", "editor"])
-    .withMessage("Role must be user, admin, moderator, or editor"),
+    .isIn(["Player", "Facility Owner", "Player / Facility Owner", "admin"])
+    .withMessage(
+      "Role must be Player, Facility Owner, Player / Facility Owner, or admin"
+    ),
 ];
 
 const statusValidation = [
@@ -51,11 +63,31 @@ const bulkRoleValidation = [
     .isArray({ min: 1 })
     .withMessage("User IDs must be a non-empty array"),
   body("role")
-    .isIn(["user", "admin", "moderator", "editor"])
+    .isIn(["Player", "Facility Owner", "Player / Facility Owner", "admin"])
     .withMessage("Invalid role"),
 ];
 
 // 🔥 RBAC Protected Routes
+
+// @route   GET /api/admin/dashboard
+// @desc    Get admin dashboard data (Admin only)
+// @access  Private (Admin)
+router.get(
+  "/dashboard",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  getAdminDashboard
+);
+
+// @route   GET /api/admin/stats
+// @desc    Get system statistics (Admin only)
+// @access  Private (Admin)
+router.get(
+  "/stats",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  getSystemStats
+);
 
 // @route   GET /api/admin/users/stats
 // @desc    Get user statistics (Admin only)
@@ -160,6 +192,110 @@ router.delete(
   authorize("admin"),
   userIdValidation,
   deleteUser
+);
+
+// Facility Management Routes
+
+// @route   GET /api/admin/facilities/pending
+// @desc    Get pending facilities for approval
+// @access  Private (Admin)
+router.get(
+  "/facilities/pending",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  getPendingFacilities
+);
+
+// @route   PUT /api/admin/facilities/:id/approve
+// @desc    Approve a facility
+// @access  Private (Admin)
+router.put(
+  "/facilities/:id/approve",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  [
+    param("id").notEmpty().withMessage("Facility ID is required"),
+    body("comments")
+      .optional()
+      .isString()
+      .withMessage("Comments must be a string"),
+  ],
+  approveFacility
+);
+
+// @route   PUT /api/admin/facilities/:id/reject
+// @desc    Reject a facility
+// @access  Private (Admin)
+router.put(
+  "/facilities/:id/reject",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  [
+    param("id").notEmpty().withMessage("Facility ID is required"),
+    body("reason").notEmpty().withMessage("Rejection reason is required"),
+    body("comments")
+      .optional()
+      .isString()
+      .withMessage("Comments must be a string"),
+  ],
+  rejectFacility
+);
+
+// @route   GET /api/admin/facilities
+// @desc    Get all facilities with admin controls
+// @access  Private (Admin)
+router.get(
+  "/facilities",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  getAllFacilities
+);
+
+// @route   PUT /api/admin/facilities/:id/status
+// @desc    Update facility status
+// @access  Private (Admin)
+router.put(
+  "/facilities/:id/status",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  [
+    param("id").notEmpty().withMessage("Facility ID is required"),
+    body("status").notEmpty().withMessage("Status is required"),
+    body("reason").optional().isString().withMessage("Reason must be a string"),
+  ],
+  updateFacilityStatus
+);
+
+// Analytics Routes
+
+// @route   GET /api/admin/analytics/facilities
+// @desc    Get facility analytics
+// @access  Private (Admin)
+router.get(
+  "/analytics/facilities",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  getFacilityAnalytics
+);
+
+// @route   GET /api/admin/analytics/sports
+// @desc    Get sports analytics
+// @access  Private (Admin)
+router.get(
+  "/analytics/sports",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  getSportsAnalytics
+);
+
+// @route   GET /api/admin/analytics/earnings
+// @desc    Get earnings analytics
+// @access  Private (Admin)
+router.get(
+  "/analytics/earnings",
+  authenticateFirebaseToken,
+  authorize("admin"),
+  getEarningsAnalytics
 );
 
 export default router;

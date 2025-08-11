@@ -6,7 +6,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./Pages/ProtectedRoute";
 import AuthGuard from "./components/AuthGuard";
 import Navbar from "./components/Navbar";
@@ -28,6 +28,17 @@ import BookingSuccess from "./Pages/BookingSuccess";
 import ProfilePage from "./Pages/profile_User";
 import ProfileOwner from "./Pages/Profile_owner";
 // import ProfilePage from "./Pages/profilenew";
+
+// Component to redirect users to appropriate profile based on their role
+const ProfileRedirect = () => {
+  const { userProfile } = useAuth();
+
+  if (userProfile?.role === "Facility Owner") {
+    return <Navigate to="/owner-profile" replace />;
+  } else {
+    return <Navigate to="/user-profile" replace />;
+  }
+};
 
 function App() {
   return (
@@ -85,7 +96,17 @@ function App() {
 
             <Route path="/unauthorized" element={<Unauthorized />} />
 
-            {/* Protected routes */}
+            {/* Unified profile route - redirects based on user role */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfileRedirect />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Profile routes - accessible to both owners and players */}
             <Route
               path="/user-profile"
               element={
@@ -113,8 +134,15 @@ function App() {
               }
             />
 
-            {/* Ground management routes - require authentication only */}
-            <Route path="/add-ground" element={<AddGround />} />
+            {/* Ground management routes - require owner role */}
+            <Route
+              path="/add-ground"
+              element={
+                <ProtectedRoute requiredRole="Facility Owner">
+                  <AddGround />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/edit-ground/:id"
               element={
@@ -126,7 +154,7 @@ function App() {
             <Route
               path="/my-grounds"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="Facility Owner">
                   <MyGrounds />
                 </ProtectedRoute>
               }

@@ -158,9 +158,6 @@ export const authorize = (...allowedRoles) => {
       });
     }
 
-    console.log(
-      `✅ User ${req.user.email} authorized with role: ${req.user.role}`
-    );
     next();
   };
 };
@@ -212,11 +209,6 @@ export const checkPermissions = (...permissions) => {
       });
     }
 
-    console.log(
-      `✅ User ${
-        req.user.email
-      } authorized with permissions: ${permissions.join(", ")}`
-    );
     next();
   };
 };
@@ -362,10 +354,6 @@ export const authorizeGroundOwner = () => {
           error: "INSUFFICIENT_ROLE",
         });
       }
-
-      console.log(
-        `✅ User ${req.user.email} authorized as ground owner (role: ${req.user.role})`
-      );
       next();
     } catch (error) {
       console.error("Error checking ground ownership authorization:", error);

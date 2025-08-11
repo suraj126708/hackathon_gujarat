@@ -84,7 +84,7 @@ const Navbar = () => {
               <div className="flex-shrink-0">
                 <Link
                   to="/"
-                  className="text-2xl font-bold text-white hover:text-blue-200 transition-all duration-300 brand-glow"
+                  className="text-2xl font-bold text-black hover:text-blue-200 transition-all duration-300 brand-glow"
                 >
                   QuickCourt
                 </Link>
@@ -97,8 +97,8 @@ const Navbar = () => {
                     to="/"
                     className={`nav-link px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                       location.pathname === "/"
-                        ? "text-white bg-white/20 shadow-lg"
-                        : "text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md"
+                        ? "text-black bg-white/20 shadow-lg"
+                        : "text-black/80 hover:text-black hover:bg-white/10 hover:shadow-md"
                     }`}
                   >
                     Home
@@ -110,8 +110,8 @@ const Navbar = () => {
                         to="/venues"
                         className={`nav-link px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                           location.pathname === "/venues"
-                            ? "text-white bg-white/20 shadow-lg"
-                            : "text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md"
+                            ? "text-black bg-white/20 shadow-lg"
+                            : "text-black/80 hover:text-black hover:bg-white/10 hover:shadow-md"
                         }`}
                       >
                         Venues
@@ -120,8 +120,8 @@ const Navbar = () => {
                         to="/add-ground"
                         className={`nav-link px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                           location.pathname === "/add-ground"
-                            ? "text-white bg-white/20 shadow-lg"
-                            : "text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md"
+                            ? "text-black bg-white/20 shadow-lg"
+                            : "text-black/80 hover:text-black hover:bg-white/10 hover:shadow-md"
                         }`}
                       >
                         Add Ground
@@ -130,8 +130,8 @@ const Navbar = () => {
                         to="/profile"
                         className={`nav-link px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                           location.pathname === "/profile"
-                            ? "text-white bg-white/20 shadow-lg"
-                            : "text-white/80 hover:text-white hover:bg-white/10 hover:shadow-md"
+                            ? "text-black bg-white/20 shadow-lg"
+                            : "text-black/80 hover:text-black hover:bg-white/10 hover:shadow-md"
                         }`}
                       >
                         Profile
@@ -145,12 +145,12 @@ const Navbar = () => {
               <div className="flex items-center space-x-4">
                 {user ? (
                   <div className="flex items-center space-x-4">
-                    <span className="text-sm text-white/90 font-medium">
+                    <span className="text-sm text-black/90 font-medium">
                       Welcome, {user.email?.split("@")[0] || "User"}
                     </span>
                     <button
                       onClick={handleSignOut}
-                      className="bg-red-500/80 hover:bg-red-600/90 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm hover:scale-105"
+                      className="bg-blue-500/80 hover:bg-blue-600/90 text-black px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm hover:scale-105"
                     >
                       Sign Out
                     </button>
@@ -159,13 +159,13 @@ const Navbar = () => {
                   <div className="flex items-center space-x-3">
                     <Link
                       to="/login"
-                      className="nav-link text-white/90 hover:text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:bg-white/10"
+                      className="nav-link text-black/90 hover:text-black px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 hover:bg-white/10"
                     >
                       Login
                     </Link>
                     <Link
                       to="/register"
-                      className="bg-blue-500/80 hover:bg-blue-600/90 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm hover:scale-105"
+                      className="bg-blue-500/80 hover:bg-blue-600/90 text-black px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm hover:scale-105"
                     >
                       Register
                     </Link>
@@ -177,7 +177,7 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden absolute right-6 top-4">
-            <button className="text-white/90 hover:text-white p-2 rounded-lg hover:bg-white/10 transition-all duration-300">
+            <button className="text-black/90 hover:text-black p-2 rounded-lg hover:bg-white/10 transition-all duration-300">
               <svg
                 className="h-6 w-6"
                 fill="none"
