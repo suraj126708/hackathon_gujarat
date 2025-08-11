@@ -12,6 +12,8 @@ import otpRoutes from "./routes/otpRoutes.js";
 import emailRoutes from "./routes/emailRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
+import timeSlotRoutes from "./routes/timeSlotRoutes.js";
 
 dotenv.config();
 
@@ -91,6 +93,8 @@ app.use("/api/otp", otpRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/timeslots", timeSlotRoutes);
 
 // Add request logging middleware
 app.use((req, res, next) => {

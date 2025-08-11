@@ -11,10 +11,14 @@ import {
   uploadGroundImages,
   searchGrounds,
   getGroundStats,
+  getOwnerFinancialSummary,
+  getOwnerMonthlyAnalytics,
+  updateGroundStatus,
 } from "../controllers/groundController.js";
 import {
   authenticateFirebaseToken,
   authorize,
+  authorizeGroundOwner,
 } from "../middleware/authMiddleware.js";
 import { validateRequest } from "../middleware/errorMiddleware.js";
 
@@ -332,7 +336,7 @@ router.post(
     next();
   },
   authenticateFirebaseToken,
-  authorize("Facility Owner"),
+  // Allow any authenticated user to create grounds (they become ground owners)
   validateGroundCreation,
   validateRequest,
   createGround
@@ -344,42 +348,42 @@ router.get("/", validatePagination, validateRequest, getAllGrounds);
 // Get ground by ID (public)
 router.get("/:groundId", validateGroundId, validateRequest, getGroundById);
 
-// Get grounds by owner (Facility Owner only)
+// Get grounds by owner (Ground owners only)
 router.get(
   "/owner/my-grounds",
   authenticateFirebaseToken,
-  authorize("Facility Owner"),
+  authorizeGroundOwner(),
   validatePagination,
   validateRequest,
   getGroundsByOwner
 );
 
-// Update ground (Facility Owner only)
+// Update ground (Ground owners only)
 router.put(
   "/:groundId",
   authenticateFirebaseToken,
-  authorize("Facility Owner"),
+  authorizeGroundOwner(),
   validateGroundId,
   validateGroundUpdate,
   validateRequest,
   updateGround
 );
 
-// Delete ground (Facility Owner only)
+// Delete ground (Ground owners only)
 router.delete(
   "/:groundId",
   authenticateFirebaseToken,
-  authorize("Facility Owner"),
+  authorizeGroundOwner(),
   validateGroundId,
   validateRequest,
   deleteGround
 );
 
-// Upload ground images (Facility Owner only)
+// Upload ground images (Ground owners only)
 router.post(
   "/:groundId/images",
   authenticateFirebaseToken,
-  authorize("Facility Owner"),
+  authorizeGroundOwner(),
   validateGroundId,
   validateRequest,
   uploadGroundImages
@@ -394,14 +398,42 @@ router.get(
   searchGrounds
 );
 
-// Get ground statistics (Facility Owner only)
+// Get ground statistics (Ground owners only)
 router.get(
   "/:groundId/stats",
   authenticateFirebaseToken,
-  authorize("Facility Owner"),
+  authorizeGroundOwner(),
   validateGroundId,
   validateRequest,
   getGroundStats
+);
+
+// Get owner financial summary (Ground owners only)
+router.get(
+  "/owner/financial-summary",
+  authenticateFirebaseToken,
+  authorizeGroundOwner(),
+  validateRequest,
+  getOwnerFinancialSummary
+);
+
+// Get owner monthly analytics (Ground owners only)
+router.get(
+  "/owner/monthly-analytics",
+  authenticateFirebaseToken,
+  authorizeGroundOwner(),
+  validateRequest,
+  getOwnerMonthlyAnalytics
+);
+
+// Update ground status (Ground owners only)
+router.patch(
+  "/:groundId/status",
+  authenticateFirebaseToken,
+  authorizeGroundOwner(),
+  validateGroundId,
+  validateRequest,
+  updateGroundStatus
 );
 
 export default router;

@@ -181,7 +181,7 @@ const groundSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["pending", "active", "inactive", "suspended", "under_review"],
-      default: "pending",
+      default: "active", // Changed from "pending" to "active" so grounds are visible by default
     },
 
     isVerified: { type: Boolean, default: false },

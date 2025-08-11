@@ -55,7 +55,7 @@ const AddGround = () => {
     pricing: {
       weekdayPrice: "",
       weekendPrice: "",
-      currency: "USD",
+      currency: "INR",
       perHour: true,
     },
     dimensions: {
@@ -116,10 +116,10 @@ const AddGround = () => {
   ];
 
   const currencies = [
+    { code: "INR", symbol: "₹", name: "Indian Rupee" },
     { code: "USD", symbol: "$", name: "US Dollar" },
     { code: "EUR", symbol: "€", name: "Euro" },
     { code: "GBP", symbol: "£", name: "British Pound" },
-    { code: "INR", symbol: "₹", name: "Indian Rupee" },
   ];
 
   const commonSports = [

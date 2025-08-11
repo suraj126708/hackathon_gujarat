@@ -54,33 +54,6 @@ const reviewSchema = new mongoose.Schema(
       maxlength: 1000,
     },
 
-    // Review categories and ratings
-    categoryRatings: {
-      cleanliness: { type: Number, min: 1, max: 5 },
-      facilities: { type: Number, min: 1, max: 5 },
-      service: { type: Number, min: 1, max: 5 },
-      value: { type: Number, min: 1, max: 5 },
-      atmosphere: { type: Number, min: 1, max: 5 },
-    },
-
-    // Images attached to review
-    images: [
-      {
-        publicId: { type: String, required: true },
-        url: { type: String, required: true },
-        thumbnailUrl: { type: String },
-        caption: { type: String },
-        uploadedAt: { type: Date, default: Date.now },
-      },
-    ],
-
-    // Review status
-    status: {
-      type: String,
-      enum: ["pending", "approved", "rejected", "hidden"],
-      default: "pending",
-    },
-
     // Moderation
     isModerated: { type: Boolean, default: false },
     moderatedAt: { type: Date },
@@ -118,23 +91,8 @@ const reviewSchema = new mongoose.Schema(
 reviewSchema.index({ ground: 1, createdAt: -1 });
 reviewSchema.index({ user: 1, createdAt: -1 });
 reviewSchema.index({ rating: 1 });
-reviewSchema.index({ status: 1 });
-reviewSchema.index({ "categoryRatings.cleanliness": 1 });
-reviewSchema.index({ "categoryRatings.facilities": 1 });
-reviewSchema.index({ "categoryRatings.service": 1 });
-reviewSchema.index({ "categoryRatings.value": 1 });
-reviewSchema.index({ "categoryRatings.atmosphere": 1 });
 reviewSchema.index({ helpfulCount: -1 });
 reviewSchema.index({ createdAt: -1 });
-
-// Virtual for average category rating
-reviewSchema.virtual("averageCategoryRating").get(function () {
-  const ratings = Object.values(this.categoryRatings).filter(
-    (rating) => rating !== undefined
-  );
-  if (ratings.length === 0) return null;
-  return ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
-});
 
 // Virtual for review age
 reviewSchema.virtual("ageInDays").get(function () {
@@ -194,50 +152,11 @@ reviewSchema.methods.addOwnerReply = function (content, isPublic = true) {
   return this.save();
 };
 
-// Static method to get reviews by ground
-reviewSchema.statics.findByGround = function (groundId, options = {}) {
-  const query = { ground: groundId, status: "approved" };
-
-  if (options.rating) {
-    query.rating = options.rating;
-  }
-
-  if (options.category) {
-    query[`categoryRatings.${options.category}`] = { $exists: true };
-  }
-
-  return this.find(query)
-    .sort(options.sort || { createdAt: -1 })
-    .limit(options.limit || 50)
-    .populate(
-      "user",
-      "displayName photoURL profile.firstName profile.lastName"
-    );
-};
-
-// Static method to get average rating for a ground
-reviewSchema.statics.getAverageRating = function (groundId) {
-  return this.aggregate([
-    { $match: { ground: groundId, status: "approved" } },
-    {
-      $group: {
-        _id: null,
-        averageRating: { $avg: "$rating" },
-        totalReviews: { $sum: 1 },
-        ratingDistribution: {
-          $push: "$rating",
-        },
-      },
-    },
-  ]);
-};
-
 // Transform output
 reviewSchema.methods.toJSON = function () {
   const reviewObject = this.toObject();
 
   // Add virtual fields
-  reviewObject.averageCategoryRating = this.averageCategoryRating;
   reviewObject.ageInDays = this.ageInDays;
 
   // Remove sensitive fields

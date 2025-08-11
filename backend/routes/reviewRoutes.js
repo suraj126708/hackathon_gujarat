@@ -11,8 +11,12 @@ import {
   reportReview,
   addOwnerReply,
   getUserReviews,
+  getOwnerGroundReviews,
 } from "../controllers/reviewController.js";
-import { authenticateFirebaseToken } from "../middleware/authMiddleware.js";
+import {
+  authenticateFirebaseToken,
+  authorizeGroundOwner,
+} from "../middleware/authMiddleware.js";
 import { validateRequest } from "../middleware/errorMiddleware.js";
 
 const router = express.Router();
@@ -38,44 +42,6 @@ const validateReviewCreation = [
     .trim()
     .isLength({ min: 10, max: 1000 })
     .withMessage("Review content must be between 10 and 1000 characters"),
-
-  body("categoryRatings.cleanliness")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Cleanliness rating must be between 1 and 5"),
-
-  body("categoryRatings.facilities")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Facilities rating must be between 1 and 5"),
-
-  body("categoryRatings.service")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Service rating must be between 1 and 5"),
-
-  body("categoryRatings.value")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Value rating must be between 1 and 5"),
-
-  body("categoryRatings.atmosphere")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Atmosphere rating must be between 1 and 5"),
-
-  body("images").optional().isArray().withMessage("Images must be an array"),
-
-  body("images.*.public_id")
-    .if(body("images").exists())
-    .trim()
-    .isLength({ min: 1 })
-    .withMessage("Image public ID is required"),
-
-  body("images.*.secure_url")
-    .if(body("images").exists())
-    .isURL()
-    .withMessage("Image URL must be valid"),
 ];
 
 const validateReviewUpdate = [
@@ -100,31 +66,6 @@ const validateReviewUpdate = [
     .trim()
     .isLength({ min: 10, max: 1000 })
     .withMessage("Review content must be between 10 and 1000 characters"),
-
-  body("categoryRatings.cleanliness")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Cleanliness rating must be between 1 and 5"),
-
-  body("categoryRatings.facilities")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Facilities rating must be between 1 and 5"),
-
-  body("categoryRatings.service")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Service rating must be between 1 and 5"),
-
-  body("categoryRatings.value")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Value rating must be between 1 and 5"),
-
-  body("categoryRatings.atmosphere")
-    .optional()
-    .isInt({ min: 1, max: 5 })
-    .withMessage("Atmosphere rating must be between 1 and 5"),
 ];
 
 const validateReviewId = [
@@ -270,6 +211,7 @@ router.post(
 router.post(
   "/:reviewId/reply",
   authenticateFirebaseToken,
+  authorizeGroundOwner(),
   validateReviewId,
   validateOwnerReply,
   validateRequest,
@@ -283,6 +225,16 @@ router.get(
   validatePagination,
   validateRequest,
   getUserReviews
+);
+
+// Get all reviews for owner's grounds (Ground owner only)
+router.get(
+  "/owner/grounds",
+  authenticateFirebaseToken,
+  authorizeGroundOwner(),
+  validatePagination,
+  validateRequest,
+  getOwnerGroundReviews
 );
 
 export default router;

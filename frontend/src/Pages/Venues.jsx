@@ -219,7 +219,7 @@ const Venues = () => {
         setFilterLoading(true);
         fetchVenues();
       }
-    }, 500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [searchTerm, selectedSport, selectedCity, priceRange, selectedRating]);
@@ -230,7 +230,7 @@ const Venues = () => {
       if (searchTerm.trim() !== "") {
         fetchVenues();
       }
-    }, 500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -393,6 +393,13 @@ const Venues = () => {
         console.log("🏟️ [VENUES] Fetched grounds:", grounds);
         console.log("🏟️ [VENUES] Response structure:", response.data);
 
+        // Debug individual venue structure
+        if (grounds && grounds.length > 0) {
+          console.log("🏟️ [VENUES] First venue structure:", grounds[0]);
+          console.log("🏟️ [VENUES] First venue groundId:", grounds[0].groundId);
+          console.log("🏟️ [VENUES] First venue _id:", grounds[0]._id);
+        }
+
         setVenues(grounds);
         setFilteredVenues(grounds);
 
@@ -426,7 +433,12 @@ const Venues = () => {
 
   // Handle venue click
   const handleVenueClick = (venue) => {
-    navigate(`/venue-details/${venue.groundId || venue._id}`);
+    console.log("🔍 [VENUES] Venue clicked:", venue);
+    console.log("🔍 [VENUES] Venue groundId:", venue.groundId);
+    console.log("🔍 [VENUES] Venue _id:", venue._id);
+    const groundId = venue.groundId || venue._id;
+    console.log("🔍 [VENUES] Navigating to:", `/venue-details/${groundId}`);
+    navigate(`/venue-details/${groundId}`);
   };
 
   // Clear all filters

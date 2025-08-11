@@ -55,7 +55,7 @@ export const authenticateFirebaseToken = async (req, res, next) => {
         authProvider: getAuthProvider(decodedToken.firebase.sign_in_provider),
         lastLoginAt: new Date(),
         lastActiveAt: new Date(),
-        role: "user", // Default role for new users
+        role: "Player", // Default role for new users - must match User model enum
       };
 
       user = new User(userData);
@@ -337,6 +337,44 @@ export const authorizeMultiple = (roleConfig) => {
     }
 
     next();
+  };
+};
+
+// 🔥 Ground Owner Authorization Middleware
+export const authorizeGroundOwner = () => {
+  return async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Access denied. User not authenticated.",
+        error: "NOT_AUTHENTICATED",
+      });
+    }
+
+    try {
+      // Check if user has the appropriate role for ground ownership
+      const allowedRoles = ["Facility Owner", "Player / Facility Owner"];
+
+      if (!allowedRoles.includes(req.user.role)) {
+        return res.status(403).json({
+          success: false,
+          message: "Access denied. Your role does not allow ground ownership.",
+          error: "INSUFFICIENT_ROLE",
+        });
+      }
+
+      console.log(
+        `✅ User ${req.user.email} authorized as ground owner (role: ${req.user.role})`
+      );
+      next();
+    } catch (error) {
+      console.error("Error checking ground ownership authorization:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error while checking authorization",
+        error: "AUTHORIZATION_CHECK_FAILED",
+      });
+    }
   };
 };
 

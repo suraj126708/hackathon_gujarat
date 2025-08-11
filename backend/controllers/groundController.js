@@ -3,6 +3,7 @@ import Ground from "../models/Ground.js";
 import Review from "../models/Review.js";
 import { validationResult } from "express-validator";
 import { v4 as uuidv4 } from "uuid";
+import Booking from "../models/Booking.js"; // Added import for Booking
 
 // Generate unique ground ID
 const generateGroundId = () => {
@@ -103,7 +104,7 @@ export const createGround = async (req, res) => {
       dimensions,
       features,
       contact,
-      owner: req.user.firebaseUid,
+      owner: req.user._id, // Use _id since that's what we store in the User model
       images: transformedImages,
     };
     console.log(
@@ -111,7 +112,26 @@ export const createGround = async (req, res) => {
       JSON.stringify(groundData, null, 2)
     );
 
-    const ground = new Ground(groundData);
+    // Check if user already owns a ground with this name
+    const existingGround = await Ground.findOne({
+      name: groundData.name,
+      owner: req.user.firebaseUid, // Use firebaseUid since that's what we store in the Ground model
+    });
+
+    if (existingGround) {
+      return res.status(400).json({
+        success: false,
+        message: "A ground with this name already exists for your account.",
+      });
+    }
+
+    // Create ground with owner
+    const ground = new Ground({
+      ...groundData,
+      owner: req.user.firebaseUid, // Use firebaseUid since that's what we store in the Ground model
+      groundId: generateGroundId(),
+      status: "active", // Set default status to active
+    });
 
     // Save ground
     console.log("🏟️ [GROUND] Saving ground to database...");
@@ -120,10 +140,12 @@ export const createGround = async (req, res) => {
 
     // Populate owner details
     console.log("🏟️ [GROUND] Populating owner details...");
-    await ground.populate(
-      "owner",
-      "displayName email profile.firstName profile.lastName"
-    );
+    await ground.populate({
+      path: "owner",
+      select: "displayName email profile.firstName profile.lastName",
+      localField: "owner",
+      foreignField: "_id",
+    });
     console.log("✅ [GROUND] Owner details populated");
 
     console.log("✅ [GROUND] Ground creation completed successfully");
@@ -152,6 +174,8 @@ export const createGround = async (req, res) => {
 // Get all grounds (with filtering and pagination)
 export const getAllGrounds = async (req, res) => {
   try {
+    console.log("🏟️ [GETALLGROUNDS] Request received with query:", req.query);
+
     const {
       page = 1,
       limit = 10,
@@ -167,7 +191,16 @@ export const getAllGrounds = async (req, res) => {
     } = req.query;
 
     // Build filter query
-    const filter = { status };
+    let filter = {};
+
+    // Handle multiple status values (e.g., "active,pending")
+    if (status && status.includes(",")) {
+      filter.status = { $in: status.split(",") };
+    } else {
+      filter.status = status;
+    }
+
+    console.log("🏟️ [GETALLGROUNDS] Initial filter:", filter);
 
     if (city) filter["location.address.city"] = new RegExp(city, "i");
     if (state) filter["location.address.state"] = new RegExp(state, "i");
@@ -186,15 +219,27 @@ export const getAllGrounds = async (req, res) => {
     // Calculate skip value for pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    console.log("🏟️ [GETALLGROUNDS] Final filter:", filter);
+    console.log("🏟️ [GETALLGROUNDS] Sort:", sort);
+    console.log("🏟️ [GETALLGROUNDS] Skip:", skip, "Limit:", limit);
+
     // Execute query with pagination
     const grounds = await Ground.find(filter)
-      .populate("owner", "displayName profile.firstName profile.lastName")
+      .populate({
+        path: "owner",
+        select: "displayName profile.firstName profile.lastName",
+        localField: "owner",
+        foreignField: "_id",
+      })
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
 
+    console.log("🏟️ [GETALLGROUNDS] Found grounds:", grounds.length);
+
     // Get total count for pagination
     const total = await Ground.countDocuments(filter);
+    console.log("🏟️ [GETALLGROUNDS] Total grounds in database:", total);
 
     // Calculate pagination info
     const totalPages = Math.ceil(total / parseInt(limit));
@@ -231,10 +276,12 @@ export const getGroundById = async (req, res) => {
   try {
     const { groundId } = req.params;
 
-    const ground = await Ground.findOne({ groundId }).populate(
-      "owner",
-      "displayName email profile.firstName profile.lastName photoURL"
-    );
+    const ground = await Ground.findOne({ groundId }).populate({
+      path: "owner",
+      select: "displayName email profile.firstName profile.lastName photoURL",
+      localField: "owner",
+      foreignField: "_id",
+    });
 
     if (!ground) {
       return res.status(404).json({
@@ -247,14 +294,34 @@ export const getGroundById = async (req, res) => {
     ground.stats.viewCount += 1;
     await ground.save();
 
-    // Get reviews for this ground
-    const reviews = await Review.findByGround(groundId, {
-      limit: 5,
-      sort: { createdAt: -1 },
-    });
+    // Get reviews for this ground using the new approach
+    const reviews = await Review.find({ ground: groundId })
+      .populate({
+        path: "user",
+        select: "displayName photoURL profile.firstName profile.lastName",
+        localField: "user",
+        foreignField: "_id",
+      })
+      .sort({ createdAt: -1 })
+      .limit(10);
 
-    // Get average rating
-    const ratingStats = await Review.getAverageRating(groundId);
+    // Get average rating using the new approach
+    const ratingStats = await Review.aggregate([
+      { $match: { ground: groundId } },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const stats = ratingStats[0] || { averageRating: 0, totalReviews: 0 };
+
+    console.log("🔍 [GROUND] Found ground:", ground.name);
+    console.log("🔍 [GROUND] Found reviews:", reviews.length);
+    console.log("🔍 [GROUND] Rating stats:", stats);
 
     res.status(200).json({
       success: true,
@@ -262,7 +329,10 @@ export const getGroundById = async (req, res) => {
       data: {
         ground,
         reviews,
-        ratingStats: ratingStats[0] || { averageRating: 0, totalReviews: 0 },
+        ratingStats: {
+          averageRating: Math.round(stats.averageRating * 10) / 10,
+          totalReviews: stats.totalReviews,
+        },
       },
     });
   } catch (error) {
@@ -280,9 +350,18 @@ export const getGroundsByOwner = async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
 
-    // Build filter
+    console.log("🔍 [DEBUG] getGroundsByOwner called");
+    console.log("🔍 [DEBUG] User object:", req.user);
+    console.log("🔍 [DEBUG] User ID:", req.user._id);
+    console.log("🔍 [DEBUG] User Firebase UID:", req.user.firebaseUid);
+    console.log("🔍 [DEBUG] User Role:", req.user.role);
+    console.log("🔍 [DEBUG] User Email:", req.user.email);
+
+    // Build filter - use firebaseUid since that's what we store in the Ground model
     const filter = { owner: req.user.firebaseUid };
     if (status) filter.status = status;
+
+    console.log("🔍 [DEBUG] Filter:", filter);
 
     // Calculate skip value for pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -292,6 +371,8 @@ export const getGroundsByOwner = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
+
+    console.log("🔍 [DEBUG] Found grounds:", grounds.length);
 
     // Get total count
     const total = await Ground.countDocuments(filter);
@@ -369,7 +450,12 @@ export const updateGround = async (req, res) => {
       { groundId },
       { ...updateData, updatedAt: new Date() },
       { new: true, runValidators: true }
-    ).populate("owner", "displayName profile.firstName profile.lastName");
+    ).populate({
+      path: "owner",
+      select: "displayName profile.firstName profile.lastName",
+      localField: "owner",
+      foreignField: "_id",
+    });
 
     res.status(200).json({
       success: true,
@@ -501,7 +587,7 @@ export const searchGrounds = async (req, res) => {
     } = req.query;
 
     // Build search query
-    const searchFilter = { status: "active" };
+    const searchFilter = { status: { $in: ["active", "pending"] } }; // Show both active and pending grounds
 
     if (query) {
       searchFilter.$or = [
@@ -530,7 +616,12 @@ export const searchGrounds = async (req, res) => {
 
     // Execute search
     const grounds = await Ground.find(searchFilter)
-      .populate("owner", "displayName profile.firstName profile.lastName")
+      .populate({
+        path: "owner",
+        select: "displayName profile.firstName profile.lastName",
+        localField: "owner",
+        foreignField: "_id",
+      })
       .sort({ "stats.averageRating": -1, createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -587,26 +678,282 @@ export const getGroundStats = async (req, res) => {
       });
     }
 
-    // Get review statistics
-    const reviewStats = await Review.getAverageRating(groundId);
+    // Get review statistics using the new approach
+    const reviewStats = await Review.aggregate([
+      { $match: { ground: groundId } },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
 
-    // Get recent reviews
-    const recentReviews = await Review.findByGround(groundId, {
-      limit: 10,
-      sort: { createdAt: -1 },
-    });
+    // Get recent reviews using the new approach
+    const recentReviews = await Review.find({ ground: groundId })
+      .populate({
+        path: "user",
+        select: "displayName photoURL profile.firstName profile.lastName",
+        localField: "user",
+        foreignField: "_id",
+      })
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    const stats = reviewStats[0] || { averageRating: 0, totalReviews: 0 };
 
     res.status(200).json({
       success: true,
       message: "Ground statistics retrieved successfully",
       data: {
         groundStats: ground.stats,
-        reviewStats: reviewStats[0] || { averageRating: 0, totalReviews: 0 },
+        reviewStats: {
+          averageRating: Math.round(stats.averageRating * 10) / 10,
+          totalReviews: stats.totalReviews,
+        },
         recentReviews,
       },
     });
   } catch (error) {
     console.error("Error getting ground stats:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// Get owner financial summary
+export const getOwnerFinancialSummary = async (req, res) => {
+  try {
+    const ownerId = req.user.firebaseUid; // Use firebaseUid since that's what we store in the Ground model
+
+    console.log("🔍 [DEBUG] Getting financial summary for owner:", ownerId);
+
+    // Get all active grounds for the owner
+    const grounds = await Ground.find({ owner: ownerId, status: "active" });
+
+    console.log(
+      "🔍 [DEBUG] Found grounds for financial summary:",
+      grounds.length
+    );
+
+    // Calculate total earnings from all grounds
+    let totalEarnings = 0;
+    let monthlyEarnings = 0;
+    let totalBookings = 0;
+    let cancelledBookings = 0;
+    let totalRating = 0;
+    let totalReviews = 0;
+
+    // Get current month and year
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    for (const ground of grounds) {
+      // Add ground stats
+      totalEarnings += ground.stats?.totalRevenue || 0;
+      totalBookings += ground.stats?.totalBookings || 0;
+      totalRating +=
+        (ground.stats?.averageRating || 0) * (ground.stats?.totalReviews || 0);
+      totalReviews += ground.stats?.totalReviews || 0;
+
+      // Calculate monthly earnings (this would need to be calculated from actual booking data)
+      // For now, we'll use a simple calculation
+      monthlyEarnings += (ground.stats?.totalRevenue || 0) / 12;
+    }
+
+    const averageRating = totalReviews > 0 ? totalRating / totalReviews : 0;
+
+    const financialSummary = {
+      totalEarnings: Math.round(totalEarnings),
+      monthlyEarnings: Math.round(monthlyEarnings),
+      totalBookings,
+      cancelledBookings,
+      averageRating: Math.round(averageRating * 10) / 10,
+      totalReviews,
+      groundsCount: grounds.length,
+    };
+
+    console.log("🔍 [DEBUG] Financial summary calculated:", financialSummary);
+
+    res.status(200).json({
+      success: true,
+      message: "Financial summary retrieved successfully",
+      data: financialSummary,
+    });
+  } catch (error) {
+    console.error("Error getting owner financial summary:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// Get owner monthly analytics
+export const getOwnerMonthlyAnalytics = async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    const ownerId = req.user.firebaseUid; // Use firebaseUid since that's what we store in the Ground model
+
+    if (!month || !year) {
+      return res.status(400).json({
+        success: false,
+        message: "Month and year are required",
+      });
+    }
+
+    // Get all grounds owned by the user
+    const grounds = await Ground.find({ owner: ownerId, status: "active" });
+    const groundIds = grounds.map((ground) => ground.groundId);
+
+    // Calculate date ranges
+    const currentMonthStart = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const currentMonthEnd = new Date(
+      parseInt(year),
+      parseInt(month),
+      0,
+      23,
+      59,
+      59
+    );
+
+    const previousMonth = parseInt(month) === 1 ? 12 : parseInt(month) - 1;
+    const previousYear =
+      parseInt(month) === 1 ? parseInt(year) - 1 : parseInt(year);
+    const previousMonthStart = new Date(previousYear, previousMonth - 1, 1);
+    const previousMonthEnd = new Date(
+      previousYear,
+      previousMonth,
+      0,
+      23,
+      59,
+      59
+    );
+
+    // Get current month data
+    const currentMonthBookings = await Booking.find({
+      groundId: { $in: groundIds },
+      date: { $gte: currentMonthStart, $lte: currentMonthEnd },
+      paymentStatus: "completed",
+    });
+
+    const currentMonthRevenue = currentMonthBookings.reduce(
+      (sum, booking) => sum + booking.totalAmount,
+      0
+    );
+
+    // Get previous month data
+    const previousMonthBookings = await Booking.find({
+      groundId: { $in: groundIds },
+      date: { $gte: previousMonthStart, $lte: previousMonthEnd },
+      paymentStatus: "completed",
+    });
+
+    const previousMonthRevenue = previousMonthBookings.reduce(
+      (sum, booking) => sum + booking.totalAmount,
+      0
+    );
+
+    // Calculate trends
+    const revenueGrowth =
+      previousMonthRevenue > 0
+        ? ((currentMonthRevenue - previousMonthRevenue) /
+            previousMonthRevenue) *
+          100
+        : 0;
+
+    const bookingsGrowth =
+      previousMonthBookings.length > 0
+        ? ((currentMonthBookings.length - previousMonthBookings.length) /
+            previousMonthBookings.length) *
+          100
+        : 0;
+
+    res.status(200).json({
+      success: true,
+      message: "Monthly analytics retrieved successfully",
+      data: {
+        currentMonth: {
+          revenue: currentMonthRevenue,
+          bookings: currentMonthBookings.length,
+          growth: revenueGrowth,
+        },
+        previousMonth: {
+          revenue: previousMonthRevenue,
+          bookings: previousMonthBookings.length,
+        },
+        trends: {
+          revenue: revenueGrowth,
+          bookings: bookingsGrowth,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error getting monthly analytics:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+// Update ground status
+export const updateGroundStatus = async (req, res) => {
+  try {
+    const { groundId } = req.params;
+    const { status } = req.body;
+
+    if (
+      !status ||
+      !["active", "inactive", "maintenance", "suspended"].includes(status)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid status. Must be one of: active, inactive, maintenance, suspended",
+      });
+    }
+
+    // Find ground and check ownership
+    const ground = await Ground.findOne({ groundId });
+
+    if (!ground) {
+      return res.status(404).json({
+        success: false,
+        message: "Ground not found",
+      });
+    }
+
+    if (ground.owner !== req.user.firebaseUid) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only update your own grounds",
+      });
+    }
+
+    // Update ground status
+    ground.status = status;
+    ground.updatedAt = new Date();
+    await ground.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Ground status updated successfully",
+      data: {
+        groundId,
+        status: ground.status,
+        updatedAt: ground.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating ground status:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",

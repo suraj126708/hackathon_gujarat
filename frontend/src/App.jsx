@@ -16,13 +16,18 @@ import Register from "./Pages/Register";
 import OTPVerification from "./Pages/OTPVerification";
 import RegisterSuccess from "./Pages/RegisterSuccess";
 import ResetPassword from "./Pages/ResetPassword";
-import Profile from "./Pages/Profile";
+import Profile from "./Pages/Profile_owner";
 import AdminDashboard from "./Pages/AdminDashboard";
 import Unauthorized from "./Pages/Unauthorized";
 import AddGround from "./Pages/AddGround";
 import MyGrounds from "./Pages/MyGrounds";
 import VenueDetails from "./Pages/VenueDetails";
 import Venues from "./Pages/Venues";
+import CourtBooking from "./Pages/CourtBooking";
+import BookingSuccess from "./Pages/BookingSuccess";
+import ProfilePage from "./Pages/profile_User";
+import ProfileOwner from "./Pages/Profile_owner";
+// import ProfilePage from "./Pages/profilenew";
 
 function App() {
   return (
@@ -33,7 +38,7 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Landing />} />
-            <Route path="/venue-details" element={<VenueDetails />} />
+            <Route path="/venue-details/:groundId" element={<VenueDetails />} />
             <Route path="/venues" element={<Venues />} />
 
             {/* Auth routes - prevent logged-in users from accessing */}
@@ -82,10 +87,18 @@ function App() {
 
             {/* Protected routes */}
             <Route
-              path="/profile"
+              path="/user-profile"
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/owner-profile"
+              element={
+                <ProtectedRoute>
+                  <ProfileOwner />
                 </ProtectedRoute>
               }
             />
@@ -115,6 +128,24 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MyGrounds />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Booking routes - require authentication */}
+            <Route
+              path="/book-court/:groundId"
+              element={
+                <ProtectedRoute>
+                  <CourtBooking />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/booking-success/:bookingId"
+              element={
+                <ProtectedRoute>
+                  <BookingSuccess />
                 </ProtectedRoute>
               }
             />

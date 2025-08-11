@@ -59,9 +59,9 @@ const Navbar = () => {
               {user && (
                 <>
                   <Link
-                    to="/Venues"
+                    to="/venues"
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      location.pathname === "/my-grounds"
+                      location.pathname === "/venues"
                         ? "text-blue-600 bg-blue-50"
                         : "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
                     }`}

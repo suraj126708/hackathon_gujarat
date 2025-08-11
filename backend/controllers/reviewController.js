@@ -25,8 +25,7 @@ export const createReview = async (req, res) => {
       });
     }
 
-    const { groundId, rating, title, content, categoryRatings, images } =
-      req.body;
+    const { groundId, rating, title, content } = req.body;
 
     // Check if ground exists and is active
     const ground = await Ground.findOne({ groundId, status: "active" });
@@ -61,21 +60,18 @@ export const createReview = async (req, res) => {
       rating,
       title,
       content,
-      categoryRatings: categoryRatings || {},
-      images: images || [],
     });
 
     // Save review
     await review.save();
+    console.log("✅ [REVIEWS] Review saved successfully with ID:", review._id);
 
     // Update ground statistics
     await updateGroundStats(groundId);
+    console.log("✅ [REVIEWS] Ground stats updated");
 
-    // Populate user details
-    await review.populate(
-      "user",
-      "displayName photoURL profile.firstName profile.lastName"
-    );
+    // Note: User details cannot be populated since user field is a string (Firebase UID)
+    console.log("✅ [REVIEWS] Review created successfully");
 
     res.status(201).json({
       success: true,
@@ -115,7 +111,7 @@ export const getReviewsByGround = async (req, res) => {
     }
 
     // Build filter
-    const filter = { ground: groundId, status: "approved" };
+    const filter = { ground: groundId };
 
     if (rating) filter.rating = parseInt(rating);
     if (category) filter[`categoryRatings.${category}`] = { $exists: true };
@@ -129,10 +125,6 @@ export const getReviewsByGround = async (req, res) => {
 
     // Execute query
     const reviews = await Review.find(filter)
-      .populate(
-        "user",
-        "displayName photoURL profile.firstName profile.lastName"
-      )
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
@@ -145,7 +137,7 @@ export const getReviewsByGround = async (req, res) => {
 
     // Get rating distribution
     const ratingDistribution = await Review.aggregate([
-      { $match: { ground: groundId, status: "approved" } },
+      { $match: { ground: groundId } },
       {
         $group: {
           _id: "$rating",
@@ -155,11 +147,27 @@ export const getReviewsByGround = async (req, res) => {
       { $sort: { _id: 1 } },
     ]);
 
+    // Calculate average rating
+    const averageRating = await Review.aggregate([
+      { $match: { ground: groundId } },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const stats = averageRating[0] || { averageRating: 0, totalReviews: 0 };
+
     res.status(200).json({
       success: true,
       message: "Reviews retrieved successfully",
       data: {
         reviews,
+        averageRating: Math.round(stats.averageRating * 10) / 10,
+        totalReviews: stats.totalReviews,
         pagination: {
           currentPage: parseInt(page),
           totalPages,
@@ -184,12 +192,7 @@ export const getReviewById = async (req, res) => {
   try {
     const { reviewId } = req.params;
 
-    const review = await Review.findOne({ reviewId })
-      .populate(
-        "user",
-        "displayName photoURL profile.firstName profile.lastName"
-      )
-      .populate("ground", "name groundId");
+    const review = await Review.findOne({ reviewId });
 
     if (!review) {
       return res.status(404).json({
@@ -261,9 +264,6 @@ export const updateReview = async (req, res) => {
       { reviewId },
       { ...updateData, updatedAt: new Date() },
       { new: true, runValidators: true }
-    ).populate(
-      "user",
-      "displayName photoURL profile.firstName profile.lastName"
     );
 
     // Update ground statistics
@@ -434,7 +434,7 @@ export const addOwnerReply = async (req, res) => {
 
     // Check if user is the ground owner
     const ground = await Ground.findOne({ groundId: review.ground });
-    if (!ground || ground.owner !== req.user.firebaseUid) {
+    if (!ground || ground.owner !== req.user._id) {
       return res.status(403).json({
         success: false,
         message: "Only ground owners can reply to reviews",
@@ -458,25 +458,28 @@ export const addOwnerReply = async (req, res) => {
   }
 };
 
-// Get user's reviews
+// Get user's reviews (Authenticated users only)
 export const getUserReviews = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
+    const userId = req.user._id;
 
-    // Calculate skip value for pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    // Execute query
-    const reviews = await Review.find({ user: req.user.firebaseUid })
-      .populate("ground", "name groundId images")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    const [reviews, total] = await Promise.all([
+      Review.find({ user: userId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate({
+          path: "ground",
+          select: "name groundId location.address.city",
+          localField: "ground",
+          foreignField: "groundId",
+        }),
+      Review.countDocuments({ user: userId }),
+    ]);
 
-    // Get total count
-    const total = await Review.countDocuments({ user: req.user.firebaseUid });
-
-    // Calculate pagination info
     const totalPages = Math.ceil(total / parseInt(limit));
 
     res.status(200).json({
@@ -502,20 +505,115 @@ export const getUserReviews = async (req, res) => {
   }
 };
 
+// Get all reviews for owner's grounds (Ground owner only)
+export const getOwnerGroundReviews = async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const ownerId = req.user._id;
+
+    // Get all grounds owned by the user
+    const grounds = await Ground.find({ owner: ownerId });
+    const groundIds = grounds.map((ground) => ground.groundId);
+
+    if (groundIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No reviews found for your grounds",
+        data: {
+          reviews: [],
+          pagination: {
+            currentPage: parseInt(page),
+            totalPages: 0,
+            total: 0,
+            limit: parseInt(limit),
+          },
+        },
+      });
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [reviews, total] = await Promise.all([
+      Review.find({ ground: { $in: groundIds } })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate({
+          path: "ground",
+          select: "name groundId location.address.city",
+          localField: "ground",
+          foreignField: "groundId",
+        }),
+      Review.countDocuments({ ground: { $in: groundIds } }),
+    ]);
+
+    const totalPages = Math.ceil(total / parseInt(limit));
+
+    // Transform reviews to include ground name and customer info
+    const transformedReviews = reviews.map((review) => ({
+      id: review._id,
+      reviewId: review.reviewId,
+      groundName: review.ground?.name || "Unknown Ground",
+      groundId: review.ground?.groundId || review.ground,
+      customerName: review.user, // This will be the Firebase UID
+      rating: review.rating,
+      comment: review.content,
+      date: review.createdAt,
+      reply: review.ownerReply,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: "Owner ground reviews retrieved successfully",
+      data: {
+        reviews: transformedReviews,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages,
+          total,
+          limit: parseInt(limit),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error getting owner ground reviews:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 // Helper function to update ground statistics
 const updateGroundStats = async (groundId) => {
   try {
-    const ratingStats = await Review.getAverageRating(groundId);
+    const ratingStats = await Review.aggregate([
+      { $match: { ground: groundId } },
+      {
+        $group: {
+          _id: null,
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
     const stats = ratingStats[0] || { averageRating: 0, totalReviews: 0 };
 
-    await Ground.findOneAndUpdate(
+    const updateResult = await Ground.findOneAndUpdate(
       { groundId },
       {
         "stats.averageRating": Math.round(stats.averageRating * 10) / 10,
         "stats.totalReviews": stats.totalReviews,
       }
     );
+
+    console.log(
+      "✅ [REVIEWS] Ground stats updated:",
+      updateResult ? "Success" : "Failed"
+    );
   } catch (error) {
-    console.error("Error updating ground stats:", error);
+    console.error("❌ [REVIEWS] Error updating ground stats:", error);
   }
 };

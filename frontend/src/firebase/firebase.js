@@ -376,7 +376,17 @@ class AuthService {
   // Get user profile from backend
   async getUserProfile() {
     try {
-      const response = await axios.get("/auth/profile");
+      // Get fresh token before making the API call
+      const idToken = await this.getIdToken();
+      if (!idToken) {
+        throw new Error("No authentication token available");
+      }
+
+      const response = await axios.get("/auth/profile", {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
       return {
         success: true,
         data: response.data.data,
@@ -403,6 +413,94 @@ class AuthService {
       return {
         success: false,
         error: error.response?.data?.message || "Failed to update profile",
+      };
+    }
+  }
+
+  // Get user bookings
+  async getUserBookings(status = "all", page = 1, limit = 10) {
+    try {
+      // Get fresh token before making the API call
+      const idToken = await this.getIdToken();
+      if (!idToken) {
+        throw new Error("No authentication token available");
+      }
+
+      const response = await axios.get("/bookings/user", {
+        params: { status, page, limit },
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    } catch (error) {
+      console.error("Get user bookings error:", error);
+      return {
+        success: false,
+        error: error.response?.data?.message || "Failed to get user bookings",
+      };
+    }
+  }
+
+  // Cancel a booking
+  async cancelBooking(bookingId, reason = "") {
+    try {
+      // Get fresh token before making the API call
+      const idToken = await this.getIdToken();
+      if (!idToken) {
+        throw new Error("No authentication token available");
+      }
+
+      const response = await axios.put(
+        `/bookings/${bookingId}/cancel`,
+        {
+          reason,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }
+      );
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    } catch (error) {
+      console.error("Cancel booking error:", error);
+      return {
+        success: false,
+        error: error.response?.data?.message || "Failed to cancel booking",
+      };
+    }
+  }
+
+  // Get booking details
+  async getBookingDetails(bookingId) {
+    try {
+      // Get fresh token before making the API call
+      const idToken = await this.getIdToken();
+      if (!idToken) {
+        throw new Error("No authentication token available");
+      }
+
+      const response = await axios.get(`/bookings/${bookingId}`, {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    } catch (error) {
+      console.error("Get booking details error:", error);
+      return {
+        success: false,
+        error: error.response?.data?.message || "Failed to get booking details",
       };
     }
   }

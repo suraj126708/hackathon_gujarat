@@ -39,7 +39,6 @@ export const validateRequest = (req, res, next) => {
       })),
     });
   }
-  console.log("✅ [VALIDATION] All validations passed successfully");
   next();
 };
 
