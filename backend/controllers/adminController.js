@@ -2,6 +2,7 @@
 import User from "../models/User.js";
 import { validationResult } from "express-validator";
 import admin from "../config/firebase.js";
+import emailService from "../config/email.js";
 
 // @desc    Get admin dashboard data
 // @route   GET /api/admin/dashboard
@@ -329,6 +330,22 @@ export const updateUserRole = async (req, res) => {
       `🔧 Admin ${req.user.email} changed user ${user.email} role from ${oldRole} to ${role}`
     );
 
+    // Send notification email to user about role change
+    try {
+      const subject = "Your Account Role Has Been Updated";
+      const message = `Your account role has been changed from ${oldRole} to ${role}. ${
+        reason ? `Reason: ${reason}` : ""
+      }`;
+      await emailService.sendNotificationEmail(user.email, subject, message);
+      console.log(`✅ Role change notification email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error(
+        "❌ Failed to send role change notification email:",
+        emailError
+      );
+      // Don't fail the operation if email fails
+    }
+
     res.status(200).json({
       success: true,
       message: "User role updated successfully",
@@ -397,6 +414,22 @@ export const updateUserStatus = async (req, res) => {
     console.log(
       `🔧 Admin ${req.user.email} changed user ${user.email} status from ${oldStatus} to ${status}`
     );
+
+    // Send notification email to user about status change
+    try {
+      const subject = "Your Account Status Has Been Updated";
+      const message = `Your account status has been changed from ${oldStatus} to ${status}. ${
+        reason ? `Reason: ${reason}` : ""
+      }`;
+      await emailService.sendNotificationEmail(user.email, subject, message);
+      console.log(`✅ Status change notification email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error(
+        "❌ Failed to send status change notification email:",
+        emailError
+      );
+      // Don't fail the operation if email fails
+    }
 
     res.status(200).json({
       success: true,

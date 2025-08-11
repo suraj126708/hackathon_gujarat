@@ -68,10 +68,15 @@ export const AuthProvider = ({ children }) => {
     signIn: authService.signInWithEmail.bind(authService),
     signUp: authService.registerWithEmail.bind(authService),
     signInWithGoogle: authService.signInWithGoogle.bind(authService),
+    signUpWithGoogle: authService.signUpWithGoogle.bind(authService),
     signOut: authService.signOut.bind(authService),
     completeRegistration: authService.completeRegistration.bind(authService),
     updateProfile: authService.updateProfile.bind(authService),
     getUserProfile: authService.getUserProfile.bind(authService),
+    // OTP methods - directly expose authService
+    authService,
+    sendOTP: authService.sendOTP.bind(authService),
+    verifyOTP: authService.verifyOTP.bind(authService),
     refreshProfile: async () => {
       const result = await authService.getUserProfile();
       if (result.success) {

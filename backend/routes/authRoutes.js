@@ -8,6 +8,8 @@ import {
   deleteUserAccount,
   verifyToken,
   createCustomToken,
+  requestPasswordReset,
+  resetPassword,
 } from "../controllers/authController.js";
 import {
   authenticateFirebaseToken,
@@ -36,6 +38,12 @@ const profileValidation = [
     .optional()
     .isLength({ max: 500 })
     .withMessage("Bio must not exceed 500 characters"),
+  body("userType")
+    .optional()
+    .isIn(["Player", "Facility Owner", "Player / Facility Owner"])
+    .withMessage(
+      "User type must be Player, Facility Owner, or Player / Facility Owner"
+    ),
   body("preferences.theme")
     .optional()
     .isIn(["light", "dark", "auto"])
@@ -48,6 +56,12 @@ const updateProfileValidation = [
     .trim()
     .isLength({ min: 1, max: 100 })
     .withMessage("Display name must be between 1 and 100 characters"),
+  body("userType")
+    .optional()
+    .isIn(["Player", "Facility Owner", "Player / Facility Owner"])
+    .withMessage(
+      "User type must be Player, Facility Owner, or Player / Facility Owner"
+    ),
   body("profile.firstName")
     .optional()
     .trim()
@@ -86,6 +100,25 @@ const customTokenValidation = [
     .optional()
     .isObject()
     .withMessage("Additional claims must be an object"),
+];
+
+// Password reset validation
+const forgotPasswordValidation = [
+  body("email")
+    .isEmail()
+    .normalizeEmail()
+    .withMessage("Please provide a valid email address"),
+];
+
+const resetPasswordValidation = [
+  body("token").notEmpty().withMessage("Reset token is required"),
+  body("newPassword")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters long")
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage(
+      "Password must contain at least one lowercase letter, one uppercase letter, and one number"
+    ),
 ];
 
 // @route   GET /api/auth/verify
@@ -133,5 +166,15 @@ router.post(
   customTokenValidation,
   createCustomToken
 );
+
+// @route   POST /api/auth/forgot-password
+// @desc    Request password reset
+// @access  Public
+router.post("/forgot-password", forgotPasswordValidation, requestPasswordReset);
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password with token
+// @access  Public
+router.post("/reset-password", resetPasswordValidation, resetPassword);
 
 export default router;

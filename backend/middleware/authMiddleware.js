@@ -373,12 +373,11 @@ export const optionalAuth = async (req, res, next) => {
   }
 };
 
-// Helper function to determine auth provider
+// Helper function to determine auth
 const getAuthProvider = (signInProvider) => {
   const providerMap = {
     password: "email",
     "google.com": "google",
-    "facebook.com": "facebook",
     "twitter.com": "twitter",
     "github.com": "github",
   };

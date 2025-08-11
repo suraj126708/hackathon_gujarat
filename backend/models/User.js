@@ -37,6 +37,13 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    // User type (Player, Facility Owner, or both)
+    userType: {
+      type: String,
+      enum: ["Player", "Facility Owner", "Player / Facility Owner"],
+      default: "Player / Facility Owner",
+    },
+
     // Additional user profile data
     profile: {
       firstName: {
@@ -100,13 +107,29 @@ const userSchema = new mongoose.Schema(
     // Firebase auth provider info
     authProvider: {
       type: String,
-      enum: ["email", "google", "facebook", "twitter", "github"],
+      enum: ["email", "google", "twitter", "github"],
       default: "email",
     },
 
     isEmailVerified: {
       type: Boolean,
       default: false,
+    },
+
+    // Phone verification
+    isPhoneVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Password reset fields
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
     },
 
     // Timestamps for user activity
@@ -133,6 +156,7 @@ userSchema.index({ firebaseUid: 1 });
 userSchema.index({ "profile.firstName": 1, "profile.lastName": 1 });
 userSchema.index({ createdAt: -1 });
 userSchema.index({ lastActiveAt: -1 });
+userSchema.index({ userType: 1 });
 
 userSchema.virtual("fullName").get(function () {
   if (this.profile.firstName && this.profile.lastName) {

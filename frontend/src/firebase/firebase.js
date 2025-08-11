@@ -9,6 +9,8 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
 } from "firebase/auth";
 import axios from "axios";
 
@@ -28,6 +30,13 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
+// Configure Google provider
+googleProvider.addScope("email");
+googleProvider.addScope("profile");
+googleProvider.setCustomParameters({
+  prompt: "select_account",
+});
+
 // Configure axios defaults
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
@@ -38,6 +47,7 @@ class AuthService {
   constructor() {
     this.currentUser = null;
     this.isLoading = true;
+    this.recaptchaVerifier = null;
 
     // Listen for auth state changes
     onAuthStateChanged(auth, async (user) => {
@@ -64,6 +74,61 @@ class AuthService {
     });
   }
 
+  // Initialize reCAPTCHA verifier
+  initRecaptcha(containerId) {
+    if (!this.recaptchaVerifier) {
+      this.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+        size: "normal",
+        callback: () => {
+          console.log("reCAPTCHA solved");
+        },
+        "expired-callback": () => {
+          console.log("reCAPTCHA expired");
+        },
+      });
+    }
+    return this.recaptchaVerifier;
+  }
+
+  // Send OTP to phone number
+  async sendOTP(phoneNumber, containerId) {
+    try {
+      const verifier = this.initRecaptcha(containerId);
+      const confirmationResult = await signInWithPhoneNumber(
+        auth,
+        phoneNumber,
+        verifier
+      );
+      return {
+        success: true,
+        confirmationResult,
+      };
+    } catch (error) {
+      console.error("Send OTP error:", error);
+      return {
+        success: false,
+        error: this.getErrorMessage(error),
+      };
+    }
+  }
+
+  // Verify OTP
+  async verifyOTP(confirmationResult, otp) {
+    try {
+      const result = await confirmationResult.confirm(otp);
+      return {
+        success: true,
+        user: result.user,
+      };
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      return {
+        success: false,
+        error: this.getErrorMessage(error),
+      };
+    }
+  }
+
   // Sync user data with backend
   async syncUserWithBackend() {
     try {
@@ -83,7 +148,7 @@ class AuthService {
   }
 
   // Register with email and password
-  async registerWithEmail(email, password, displayName) {
+  async registerWithEmail(email, password, displayName, userType) {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -101,6 +166,15 @@ class AuthService {
       // Get fresh ID token
       const idToken = await userCredential.user.getIdToken();
       axios.defaults.headers.common["Authorization"] = `Bearer ${idToken}`;
+
+      // Complete registration with backend
+      if (userType) {
+        await this.completeRegistration({
+          displayName,
+          userType,
+          email,
+        });
+      }
 
       return {
         success: true,
@@ -141,6 +215,65 @@ class AuthService {
     }
   }
 
+  // Sign up with Google
+  async signUpWithGoogle() {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+
+      // Get ID token and set header
+      const idToken = await result.user.getIdToken();
+      axios.defaults.headers.common["Authorization"] = `Bearer ${idToken}`;
+
+      // Create user profile in backend
+      try {
+        const userData = {
+          displayName:
+            result.user.displayName || result.user.email?.split("@")[0],
+          email: result.user.email,
+          photoURL: result.user.photoURL,
+          userType: "Player", // Default user type for Google sign-up
+          isEmailVerified: result.user.emailVerified,
+        };
+
+        await this.completeRegistration(userData);
+      } catch (profileError) {
+        console.warn("Failed to create user profile in backend:", profileError);
+        // Don't fail the sign-up if backend profile creation fails
+      }
+
+      return {
+        success: true,
+        user: result.user,
+      };
+    } catch (error) {
+      console.error("Google sign up error:", error);
+
+      // Handle specific Google sign-up errors
+      let errorMessage = "Failed to sign up with Google";
+
+      if (error.code === "auth/popup-closed-by-user") {
+        errorMessage = "Sign-up was cancelled. Please try again.";
+      } else if (error.code === "auth/popup-blocked") {
+        errorMessage =
+          "Pop-up was blocked by your browser. Please allow pop-ups and try again.";
+      } else if (
+        error.code === "auth/account-exists-with-different-credential"
+      ) {
+        errorMessage =
+          "An account already exists with the same email address but different sign-in credentials.";
+      } else if (error.code === "auth/network-request-failed") {
+        errorMessage =
+          "Network error. Please check your internet connection and try again.";
+      }
+
+      return {
+        success: false,
+        error: errorMessage,
+        originalError: error.code,
+      };
+    }
+  }
+
   // Sign in with Google
   async signInWithGoogle() {
     try {
@@ -150,15 +283,43 @@ class AuthService {
       const idToken = await result.user.getIdToken();
       axios.defaults.headers.common["Authorization"] = `Bearer ${idToken}`;
 
+      // Sync user with backend after successful Google sign-in
+      try {
+        await this.syncUserWithBackend();
+      } catch (syncError) {
+        console.warn("Failed to sync user with backend:", syncError);
+        // Don't fail the sign-in if backend sync fails
+      }
+
       return {
         success: true,
         user: result.user,
       };
     } catch (error) {
       console.error("Google sign in error:", error);
+
+      // Handle specific Google sign-in errors
+      let errorMessage = "Failed to sign in with Google";
+
+      if (error.code === "auth/popup-closed-by-user") {
+        errorMessage = "Sign-in was cancelled. Please try again.";
+      } else if (error.code === "auth/popup-blocked") {
+        errorMessage =
+          "Pop-up was blocked by your browser. Please allow pop-ups and try again.";
+      } else if (
+        error.code === "auth/account-exists-with-different-credential"
+      ) {
+        errorMessage =
+          "An account already exists with the same email address but different sign-in credentials.";
+      } else if (error.code === "auth/network-request-failed") {
+        errorMessage =
+          "Network error. Please check your internet connection and try again.";
+      }
+
       return {
         success: false,
-        error: this.getErrorMessage(error),
+        error: errorMessage,
+        originalError: error.code,
       };
     }
   }
@@ -283,6 +444,10 @@ class AuthService {
       "auth/popup-closed-by-user":
         "Sign-in popup was closed before completion.",
       "auth/cancelled-popup-request": "Sign-in was cancelled.",
+      "auth/invalid-verification-code": "Invalid OTP code.",
+      "auth/invalid-verification-id": "Invalid verification ID.",
+      "auth/missing-verification-code": "OTP code is required.",
+      "auth/missing-verification-id": "Verification ID is required.",
     };
 
     return (
@@ -306,7 +471,8 @@ class AuthService {
         console.error("Get dashboard error:", error);
         return {
           success: false,
-          error: error.response?.data?.message || "Failed to get dashboard data",
+          error:
+            error.response?.data?.message || "Failed to get dashboard data",
         };
       }
     },
@@ -315,7 +481,7 @@ class AuthService {
     async getUsers(filters = {}) {
       try {
         const params = new URLSearchParams();
-        Object.keys(filters).forEach(key => {
+        Object.keys(filters).forEach((key) => {
           if (filters[key]) params.append(key, filters[key]);
         });
 
@@ -385,7 +551,8 @@ class AuthService {
         console.error("Update user status error:", error);
         return {
           success: false,
-          error: error.response?.data?.message || "Failed to update user status",
+          error:
+            error.response?.data?.message || "Failed to update user status",
         };
       }
     },
@@ -411,11 +578,13 @@ class AuthService {
     async exportUsers(filters = {}) {
       try {
         const params = new URLSearchParams();
-        Object.keys(filters).forEach(key => {
+        Object.keys(filters).forEach((key) => {
           if (filters[key]) params.append(key, filters[key]);
         });
 
-        const response = await axios.get(`/admin/users/export?${params.toString()}`);
+        const response = await axios.get(
+          `/admin/users/export?${params.toString()}`
+        );
         return {
           success: true,
           data: response.data,
@@ -460,4 +629,6 @@ export {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
 };

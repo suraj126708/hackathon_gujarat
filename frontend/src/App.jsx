@@ -8,8 +8,12 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./Pages/ProtectedRoute";
+import Landing from "./Pages/Landing";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
+import OTPVerification from "./Pages/OTPVerification";
+import RegisterSuccess from "./Pages/RegisterSuccess";
+import ResetPassword from "./Pages/ResetPassword";
 import Home from "./Pages/Home";
 import AdminDashboard from "./Pages/AdminDashboard";
 import Unauthorized from "./Pages/Unauthorized";
@@ -21,8 +25,12 @@ function App() {
         <div className="App">
           <Routes>
             {/* Public routes */}
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/otp-verification" element={<OTPVerification />} />
+            <Route path="/register-success" element={<RegisterSuccess />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             {/* Protected routes */}
@@ -45,11 +53,8 @@ function App() {
               }
             />
 
-            {/* Redirect root to home */}
-            <Route path="/" element={<Navigate to="/home" replace />} />
-
             {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/home" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </AuthProvider>

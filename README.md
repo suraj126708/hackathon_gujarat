@@ -1,200 +1,184 @@
-# Full-Stack React + Node.js Application with Firebase Authentication
+# QuickCourt - Basketball Community Platform
 
-This is a complete full-stack application with React frontend and Node.js backend, featuring Firebase authentication with Google and email/password login.
+A full-stack web application for connecting basketball players and facility owners, built with React frontend and Node.js backend.
 
-## Project Structure
+## 🏀 Features
 
+- **User Registration & Authentication** with Firebase
+- **Email OTP Verification** for secure account creation
+- **User Profiles** with customizable information
+- **Admin Dashboard** for user management
+- **Responsive Design** for mobile and desktop
+
+## 🔐 User Registration Flow
+
+The application follows this secure registration process:
+
+1. **User fills registration form** with email, password, and profile details
+2. **Backend sends 6-digit OTP** to user's email address
+3. **User enters OTP** in verification page
+4. **Backend verifies OTP** and creates user account
+5. **User is redirected** to landing page upon successful verification
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- MongoDB
+- Gmail account with App Password
+- Firebase project
+
+### Backend Setup
+
+1. **Clone and install dependencies:**
+
+   ```bash
+   cd backend
+   npm install
+   ```
+
+2. **Configure environment variables:**
+
+   ```bash
+   cp env.example .env
+   # Edit .env with your actual values
+   ```
+
+3. **Set up email configuration:**
+
+   - Enable 2FA on Gmail
+   - Generate App Password
+   - Add to .env file
+
+4. **Start the server:**
+
+   ```bash
+   npm run dev
+   ```
+
+5. **Test email functionality:**
+   ```bash
+   node test-email.js
+   ```
+
+### Frontend Setup
+
+1. **Install dependencies:**
+
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+2. **Start development server:**
+   ```bash
+   npm run dev
+   ```
+
+## 📧 Email OTP Configuration
+
+### Required Environment Variables
+
+```env
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+EMAIL_FROM_NAME=QuickCourt
+FRONTEND_URL=http://localhost:5173
 ```
-OdooHackathon/
-├── frontend/          # React + Vite application
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Login.jsx
-│   │   │   ├── Register.jsx
-│   │   │   ├── Home.jsx
-│   │   │   └── PrivateRoute.jsx
-│   │   ├── contexts/
-│   │   │   └── AuthContext.jsx
-│   │   ├── firebase.js
-│   │   └── App.jsx
-│   └── package.json
-├── backend/           # Node.js + Express server
-│   ├── server.js
-│   ├── env.example
-│   └── package.json
-└── README.md
-```
 
-## Features
+### Email Setup Steps
 
-- **Frontend (React + Vite)**
-  - Modern React with Vite for fast development
-  - Material-UI for beautiful components
-  - React Router for navigation
-  - Firebase Authentication
-  - Protected routes
-  - Responsive design
+1. Enable 2-Factor Authentication on Gmail
+2. Generate App Password for Mail
+3. Add credentials to .env file
+4. Test with `node test-email.js`
 
-- **Backend (Node.js + Express)**
-  - Express server with CORS
-  - Firebase Admin SDK integration
-  - JWT token verification
-  - Protected API routes
-  - User profile management
+## 🔄 API Endpoints
 
-- **Authentication**
-  - Email/Password registration and login
-  - Google OAuth authentication
-  - Secure token-based authentication
-  - User session management
+### OTP Management
 
-## Prerequisites
+- `POST /api/otp/send-email` - Send OTP to email
+- `POST /api/otp/verify-email` - Verify email OTP
+- `POST /api/otp/send` - Send OTP to phone (legacy)
+- `POST /api/otp/verify` - Verify phone OTP (legacy)
 
-- Node.js (v14 or higher)
-- npm or yarn
-- Firebase project setup
+### Authentication
 
-## Setup Instructions
+- `POST /api/auth/register` - Complete user registration
+- `GET /api/auth/profile` - Get user profile
+- `PUT /api/auth/profile` - Update user profile
 
-### 1. Firebase Setup
+### Admin
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project or use an existing one
-3. Enable Authentication and add Google provider
-4. Create a web app and get the configuration
-5. Generate a service account key for the backend
+- `GET /api/admin/dashboard` - Admin dashboard data
+- `GET /api/admin/users` - Get all users
+- `PUT /api/admin/users/:id/role` - Update user role
 
-### 2. Frontend Setup
+## 🏗️ Architecture
 
-```bash
-cd frontend
-npm install
-```
+- **Frontend**: React + Vite + Tailwind CSS
+- **Backend**: Node.js + Express + MongoDB
+- **Authentication**: Firebase Auth
+- **Email**: Nodemailer + Gmail SMTP
+- **Database**: MongoDB with Mongoose ODM
 
-Update `src/firebase.js` with your Firebase configuration:
+## 🔒 Security Features
 
-```javascript
-const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
-};
-```
+- Firebase token-based authentication
+- Email OTP verification (6 digits, 5-minute expiry)
+- Rate limiting on OTP attempts (max 3 failures)
+- Helmet.js security headers
+- CORS configuration
+- Input validation with express-validator
 
-### 3. Backend Setup
+## 📱 User Experience
+
+- **Responsive Design**: Works on all device sizes
+- **Real-time Validation**: Password strength indicator
+- **Smooth Navigation**: Seamless flow between pages
+- **Error Handling**: Clear error messages and recovery options
+- **Loading States**: Visual feedback during operations
+
+## 🧪 Testing
+
+### Backend Testing
 
 ```bash
 cd backend
-npm install
+node test-email.js  # Test email functionality
 ```
 
-Create a `.env` file based on `env.example`:
+### Frontend Testing
 
 ```bash
-cp env.example .env
+cd frontend
+npm run build       # Test build process
 ```
 
-Update the `.env` file with your Firebase Admin SDK credentials:
-
-```env
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_PRIVATE_KEY_ID=your-private-key-id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour private key here\n-----END PRIVATE KEY-----\n"
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
-FIREBASE_CLIENT_ID=your-client-id
-FIREBASE_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-xxxxx%40your-project.iam.gserviceaccount.com
-PORT=5000
-NODE_ENV=development
-```
-
-## Running the Application
-
-### Development Mode
-
-1. **Start the backend server:**
-   ```bash
-   cd backend
-   npm run dev
-   ```
-   The server will run on `http://localhost:5000`
-
-2. **Start the frontend development server:**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   The frontend will run on `http://localhost:5173`
-
-### Production Mode
-
-1. **Build the frontend:**
-   ```bash
-   cd frontend
-   npm run build
-   ```
-
-2. **Start the backend:**
-   ```bash
-   cd backend
-   npm start
-   ```
-
-## API Endpoints
-
-### Public Routes
-- `GET /` - Server status
-- `GET /api/profile` - Get user profile (requires authentication)
-
-### Protected Routes (require Firebase token)
-- `PUT /api/profile` - Update user profile
-- `GET /api/user/:uid` - Get user data by UID
-
-## Frontend Routes
-
-- `/login` - Login page
-- `/register` - Registration page
-- `/home` - Protected home page (requires authentication)
-- `/` - Redirects to login
-
-## Technologies Used
-
-### Frontend
-- React 18
-- Vite
-- React Router DOM
-- Material-UI
-- Firebase SDK
-- Axios
+## 🚀 Deployment
 
 ### Backend
-- Node.js
-- Express.js
-- Firebase Admin SDK
-- CORS
-- dotenv
-- bcryptjs
-- jsonwebtoken
 
-## Authentication Flow
+- Set `NODE_ENV=production`
+- Use Redis for OTP storage (instead of in-memory)
+- Configure production MongoDB
+- Set up proper CORS origins
 
-1. User registers/logs in through Firebase Auth
-2. Firebase returns a JWT token
-3. Frontend stores the token
-4. Backend verifies the token using Firebase Admin SDK
-5. Protected routes are accessible with valid token
+### Frontend
 
-## Security Features
+- Build with `npm run build`
+- Deploy to Vercel, Netlify, or similar
+- Update `VITE_API_BASE_URL` for production
 
-- Firebase Authentication for secure user management
-- JWT token verification on backend
-- Protected routes on both frontend and backend
-- CORS configuration for API security
-- Environment variables for sensitive data
+## 📝 Development Notes
 
-## Contributing
+- OTPs are currently stored in memory (use Redis in production)
+- Email templates are basic HTML (customize for production)
+- Firebase configuration is hardcoded (move to environment variables)
+- Add comprehensive error logging for production
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -202,6 +186,6 @@ NODE_ENV=development
 4. Test thoroughly
 5. Submit a pull request
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License. 
+This project is licensed under the ISC License.
