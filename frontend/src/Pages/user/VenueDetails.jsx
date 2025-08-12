@@ -13,8 +13,8 @@ import {
   AlertCircle,
   ArrowLeft,
 } from "lucide-react";
-import AddReviews from "../components/AddReviews";
-import ReviewsSection from "../components/ReviewsSection";
+import AddReviews from "../../components/AddReviews";
+import ReviewsSection from "../../components/ReviewsSection";
 
 // API base URL - adjust this to match your backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -190,10 +190,10 @@ const VenueDetails = () => {
       );
       console.log(
         "🔍 [VENUEDETAILS] API URL:",
-        `${API_BASE_URL}/grounds/${groundId}`
+        `${API_BASE_URL}/api/grounds/${groundId}`
       );
 
-      const response = await fetch(`${API_BASE_URL}/grounds/${groundId}`);
+      const response = await fetch(`${API_BASE_URL}/api/grounds/${groundId}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -273,7 +273,7 @@ const VenueDetails = () => {
     try {
       console.log("🔍 [VENUEDETAILS] Fetching reviews for groundId:", groundId);
       const response = await fetch(
-        `${API_BASE_URL}/reviews/ground/${groundId}`
+        `${API_BASE_URL}/api/reviews/ground/${groundId}`
       );
       if (response.ok) {
         const result = await response.json();
@@ -296,11 +296,18 @@ const VenueDetails = () => {
           );
 
           setVenueData((prevData) => {
+            if (!prevData) {
+              console.warn(
+                "⚠️ [VENUEDETAILS] No previous data to update, skipping review update"
+              );
+              return prevData;
+            }
+
             const newData = {
               ...prevData,
               reviews: result.data.reviews || [],
               stats: {
-                ...prevData.stats,
+                ...(prevData.stats || {}),
                 totalReviews: result.data.totalReviews || 0,
                 averageRating: result.data.averageRating || 0,
               },
@@ -327,7 +334,7 @@ const VenueDetails = () => {
     try {
       // Fetch only the reviews for this ground
       const response = await fetch(
-        `${API_BASE_URL}/reviews/ground/${groundId}`
+        `${API_BASE_URL}/api/reviews/ground/${groundId}`
       );
       if (response.ok) {
         const result = await response.json();
@@ -340,11 +347,18 @@ const VenueDetails = () => {
 
           // Update only the reviews part of venueData
           setVenueData((prevData) => {
+            if (!prevData) {
+              console.warn(
+                "⚠️ [VENUEDETAILS] No previous data to update, skipping review update"
+              );
+              return prevData;
+            }
+
             const newData = {
               ...prevData,
               reviews: result.data.reviews || [],
               stats: {
-                ...prevData.stats,
+                ...(prevData.stats || {}),
                 totalReviews: result.data.totalReviews || 0,
                 averageRating: result.data.averageRating || 0,
               },
@@ -453,9 +467,9 @@ const VenueDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-28">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => navigate(-1)}

@@ -39,8 +39,7 @@ googleProvider.setCustomParameters({
 
 // Configure axios defaults
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://hackathon-gujarat.onrender.com/api";
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 axios.defaults.baseURL = API_BASE_URL;
 
 // Auth service class
@@ -528,6 +527,8 @@ class AuthService {
     const errorMessages = {
       "auth/user-not-found": "No account found with this email address.",
       "auth/wrong-password": "Incorrect password.",
+      "auth/invalid-credential":
+        "Invalid email or password. Please check your credentials and try again.",
       "auth/email-already-in-use": "An account with this email already exists.",
       "auth/weak-password": "Password should be at least 6 characters.",
       "auth/invalid-email": "Invalid email address.",

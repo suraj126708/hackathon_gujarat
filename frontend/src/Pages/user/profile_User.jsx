@@ -8,8 +8,8 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import { authService } from "../firebase/firebase";
+import { useAuth } from "../../contexts/AuthContext";
+import { authService } from "../../firebase/firebase";
 
 const ProfilePage = () => {
   const { user, userProfile } = useAuth();
@@ -224,7 +224,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-28">
       <div className="max-w-7xl mx-auto px-6 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Profile Page</h1>
 

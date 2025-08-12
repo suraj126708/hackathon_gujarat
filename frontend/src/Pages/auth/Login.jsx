@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-vars */
 // src/components/Login.jsx
 import React, { useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { ArrowLeft } from "lucide-react";
-import ForgotPassword from "../components/ForgotPassword";
+import ForgotPassword from "../../components/ForgotPassword";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -24,14 +24,20 @@ const Login = () => {
     setLoading(true);
 
     try {
+      console.log("🔄 Attempting to sign in with email:", email);
       const result = await signIn(email, password);
+      console.log("📧 Sign in result:", result);
+
       if (result.success) {
+        console.log("✅ Sign in successful, navigating to home...");
         navigate("/home");
       } else {
+        console.error("❌ Sign in failed:", result.error);
         setError(result.error);
       }
     } catch (error) {
-      setError("Failed to sign in");
+      console.error("💥 Sign in error:", error);
+      setError("Failed to sign in. Please try again.");
     }
 
     setLoading(false);

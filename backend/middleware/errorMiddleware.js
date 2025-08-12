@@ -17,10 +17,10 @@ export class AppError extends Error {
 export const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.log("❌ [VALIDATION] Validation errors found:");
-    console.log("❌ [VALIDATION] Error count:", errors.array().length);
+    console.log("[VALIDATION] Validation errors found:");
+    console.log("[VALIDATION] Error count:", errors.array().length);
     errors.array().forEach((error, index) => {
-      console.log(`❌ [VALIDATION] Error ${index + 1}:`, {
+      console.log(`[VALIDATION] Error ${index + 1}:`, {
         field: error.path,
         message: error.msg,
         value: error.value,

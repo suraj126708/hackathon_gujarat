@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const Navbar = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, hasAnyRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -116,16 +116,21 @@ const Navbar = () => {
                       >
                         Venues
                       </Link>
-                      <Link
-                        to="/add-ground"
-                        className={`nav-link px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
-                          location.pathname === "/add-ground"
-                            ? "text-black bg-white/20 shadow-lg"
-                            : "text-black/80 hover:text-black hover:bg-white/10 hover:shadow-md"
-                        }`}
-                      >
-                        Add Ground
-                      </Link>
+                      {hasAnyRole([
+                        "Facility Owner",
+                        "Player / Facility Owner",
+                      ]) && (
+                        <Link
+                          to="/add-ground"
+                          className={`nav-link px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                            location.pathname === "/add-ground"
+                              ? "text-black bg-white/20 shadow-lg"
+                              : "text-black/80 hover:text-black hover:bg-white/10 hover:shadow-md"
+                          }`}
+                        >
+                          Add Ground
+                        </Link>
+                      )}
                       <Link
                         to="/profile"
                         className={`nav-link px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${

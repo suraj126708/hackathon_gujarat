@@ -1,4 +1,4 @@
-// src/Pages/Unauthorized.jsx
+// src/Pages/common/Unauthorized.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaLock, FaHome, FaArrowLeft } from "react-icons/fa";
@@ -26,10 +26,10 @@ const Unauthorized = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <div className="text-center">
             <p className="text-gray-600 mb-6">
-              Sorry, you don't have the required permissions to view this page. 
+              Sorry, you don't have the required permissions to view this page.
               Please contact an administrator if you believe this is an error.
             </p>
-            
+
             <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3 sm:justify-center">
               <button
                 onClick={() => navigate("/home")}
@@ -38,7 +38,7 @@ const Unauthorized = () => {
                 <FaHome className="mr-2 h-4 w-4" />
                 Go to Home
               </button>
-              
+
               <button
                 onClick={() => navigate(-1)}
                 className="flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -54,4 +54,4 @@ const Unauthorized = () => {
   );
 };
 
-export default Unauthorized; 
+export default Unauthorized;

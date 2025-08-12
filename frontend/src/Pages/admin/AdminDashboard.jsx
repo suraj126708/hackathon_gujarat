@@ -1,10 +1,10 @@
-// src/Pages/AdminDashboard.jsx
+// src/Pages/admin/AdminDashboard.jsx
 // This component uses mock data for analytics charts to ensure consistent data display
 // Mock data is prioritized over API data for better user experience and consistent analytics
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { adminService } from "../services/adminService";
+import { adminService } from "../../services/adminService";
 import { RefreshCw } from "lucide-react";
 import {
   // Import all components from Compressor.js
@@ -21,7 +21,7 @@ import {
   LoadingSpinner,
   AdminSidebar,
   prepareChartData,
-} from "../components/Compressor";
+} from "../../components/Compressor";
 
 const AdminDashboard = () => {
   const { user, userProfile, signOut } = useAuth();

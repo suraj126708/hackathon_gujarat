@@ -47,8 +47,8 @@ import {
   List,
   Info,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import { groundOwnerService } from "../services/groundOwnerService";
+import { useAuth } from "../../contexts/AuthContext";
+import { groundOwnerService } from "../../services/groundOwnerService";
 import {
   LineChart,
   Line,
@@ -435,14 +435,11 @@ const ProfileOwner = () => {
       );
 
       // Try to fetch all grounds and filter by owner
-      const response = await fetch(
-        `https://hackathon-gujarat.onrender.com/api/grounds`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`http://localhost:5000/api/grounds`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -488,9 +485,7 @@ const ProfileOwner = () => {
   const testFetchAllGrounds = async () => {
     try {
       console.log("🔍 [DEBUG] Testing fetch all grounds...");
-      const response = await fetch(
-        `https://hackathon-gujarat.onrender.com/api/grounds`
-      );
+      const response = await fetch(`http://localhost:5000/api/grounds`);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -554,9 +549,7 @@ const ProfileOwner = () => {
   const testFetchAllGroundsNoAuth = async () => {
     try {
       console.log("🔍 [DEBUG] Testing fetch all grounds without auth...");
-      const response = await fetch(
-        `https://hackathon-gujarat.onrender.com/api/grounds`
-      );
+      const response = await fetch(`http://localhost:5000/api/grounds`);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1179,7 +1172,7 @@ const ProfileOwner = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-28">
       <div className="max-w-7xl mx-auto px-6 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Ground Owner Dashboard

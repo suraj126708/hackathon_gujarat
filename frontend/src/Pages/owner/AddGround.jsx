@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import axios from "axios";
 import {
   MapPin,
@@ -17,7 +17,7 @@ import {
   Ruler,
   Star,
 } from "lucide-react";
-import Unauthorized from "./Unauthorized";
+import Unauthorized from "../common/Unauthorized";
 
 const AddGround = () => {
   const navigate = useNavigate();
@@ -215,7 +215,7 @@ const AddGround = () => {
       setSubmitError("");
 
       const response = await axios.put(
-        `https://hackathon-gujarat.onrender.com/api/auth/profile`,
+        `http://localhost:5000/api/auth/profile`,
         { role: "Facility Owner" },
         {
           headers: {
@@ -336,7 +336,7 @@ const AddGround = () => {
       console.log("Submitting ground data:", submitData);
 
       const response = await axios.post(
-        `https://hackathon-gujarat.onrender.com/api/grounds`,
+        `http://localhost:5000/api/grounds`,
         submitData,
         {
           headers: {
@@ -392,7 +392,7 @@ const AddGround = () => {
       });
 
       const response = await axios.post(
-        `https://hackathon-gujarat.onrender.com/api/images/upload-ground`,
+        `http://localhost:5000/api/images/upload-ground`,
         formData,
         {
           headers: {

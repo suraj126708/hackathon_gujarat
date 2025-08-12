@@ -15,7 +15,7 @@ const ForgotPassword = ({ isOpen, onClose, onSuccess }) => {
 
     try {
       const response = await fetch(
-        "https://hackathon-gujarat.onrender.com/api/auth/forgot-password",
+        "http://localhost:5000/api/auth/forgot-password",
         {
           method: "POST",
           headers: {

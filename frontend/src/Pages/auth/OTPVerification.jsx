@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaLock } from "react-icons/fa";
 import { ArrowLeft } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const OTPVerification = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -73,8 +73,7 @@ const OTPVerification = () => {
       // Verify OTP with backend
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_BASE_URL ||
-          "https://hackathon-gujarat.onrender.com/api"
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
         }/otp/verify-email`,
         {
           method: "POST",
@@ -107,7 +106,7 @@ const OTPVerification = () => {
               const uploadResponse = await fetch(
                 `${
                   import.meta.env.VITE_API_BASE_URL ||
-                  "https://hackathon-gujarat.onrender.com/api"
+                  "http://localhost:5000/api"
                 }/images/upload-profile`,
                 {
                   method: "POST",
@@ -164,8 +163,7 @@ const OTPVerification = () => {
       // Call backend to resend OTP
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_BASE_URL ||
-          "https://hackathon-gujarat.onrender.com/api"
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
         }/otp/send-email`,
         {
           method: "POST",

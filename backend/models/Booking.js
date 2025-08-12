@@ -173,6 +173,8 @@ const bookingSchema = new mongoose.Schema(
 
 // Indexes for better query performance
 bookingSchema.index({ groundId: 1, date: 1, startTime: 1 });
+bookingSchema.index({ groundId: 1, date: 1, status: 1 }); // For availability checks
+bookingSchema.index({ userId: 1, date: 1, status: 1 }); // For user double-booking checks
 bookingSchema.index({ userId: 1, status: 1 });
 bookingSchema.index({ paymentStatus: 1, status: 1 });
 bookingSchema.index({ createdAt: -1 });

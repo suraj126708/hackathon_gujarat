@@ -7,26 +7,26 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import ProtectedRoute from "./Pages/ProtectedRoute";
+import ProtectedRoute from "./Pages/common/ProtectedRoute";
 import AuthGuard from "./components/AuthGuard";
 import Navbar from "./components/Navbar";
-import Landing from "./Pages/Landing";
-import Login from "./Pages/Login";
-import Register from "./Pages/Register";
-import OTPVerification from "./Pages/OTPVerification";
-import RegisterSuccess from "./Pages/RegisterSuccess";
-import ResetPassword from "./Pages/ResetPassword";
-import Profile from "./Pages/Profile_owner";
-import AdminDashboard from "./Pages/AdminDashboard";
-import Unauthorized from "./Pages/Unauthorized";
-import AddGround from "./Pages/AddGround";
-import MyGrounds from "./Pages/MyGrounds";
-import VenueDetails from "./Pages/VenueDetails";
-import Venues from "./Pages/Venues";
-import CourtBooking from "./Pages/CourtBooking";
-import BookingSuccess from "./Pages/BookingSuccess";
-import ProfilePage from "./Pages/profile_User";
-import ProfileOwner from "./Pages/Profile_owner";
+import Landing from "./Pages/common/Landing";
+import Login from "./Pages/auth/Login";
+import Register from "./Pages/auth/Register";
+import OTPVerification from "./Pages/auth/OTPVerification";
+import RegisterSuccess from "./Pages/common/RegisterSuccess";
+import ResetPassword from "./Pages/auth/ResetPassword";
+import Profile from "./Pages/owner/Profile_owner";
+import AdminDashboard from "./Pages/admin/AdminDashboard";
+import Unauthorized from "./Pages/common/Unauthorized";
+import AddGround from "./Pages/owner/AddGround";
+import MyGrounds from "./Pages/owner/MyGrounds";
+import VenueDetails from "./Pages/user/VenueDetails";
+import Venues from "./Pages/user/Venues";
+import CourtBooking from "./Pages/user/CourtBooking";
+import BookingSuccess from "./Pages/common/BookingSuccess";
+import ProfilePage from "./Pages/user/profile_User";
+import ProfileOwner from "./Pages/owner/Profile_owner";
 // import ProfilePage from "./Pages/profilenew";
 
 // Component to redirect users to appropriate profile based on their role

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   Calendar,
   MapPin,
   Star,
-  Clock,
   Minus,
   Plus,
   ChevronDown,
@@ -63,6 +62,10 @@ export default function CourtBooking() {
     return `${hour.toString().padStart(2, "0")}:00`;
   });
 
+  // State for available time slots from backend
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
   const monthNames = [
     "January",
     "February",
@@ -94,6 +97,15 @@ export default function CourtBooking() {
     setSelectedDate(tomorrow.toISOString().split("T")[0]);
   }, []);
 
+  // Fetch available time slots when date changes
+  useEffect(() => {
+    if (selectedDate && groundId) {
+      // Clear selected start time when date changes
+      setStartTime("");
+      fetchAvailableTimeSlots();
+    }
+  }, [selectedDate, groundId]);
+
   const fetchGroundData = async () => {
     try {
       setLoading(true);
@@ -123,6 +135,34 @@ export default function CourtBooking() {
       setError("Failed to fetch ground information");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAvailableTimeSlots = async () => {
+    try {
+      setCheckingAvailability(true);
+      setError("");
+
+      const token = await user.getIdToken();
+      const response = await axios.get(
+        `${API_BASE_URL}/api/bookings/available-slots/${groundId}?date=${selectedDate}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // Store all time slots with availability status
+        setAvailableTimeSlots(response.data.data.allTimeSlots || []);
+      }
+    } catch (error) {
+      console.error("Error fetching available time slots:", error);
+      // Don't show error for availability check, just log it
+      setAvailableTimeSlots([]);
+    } finally {
+      setCheckingAvailability(false);
     }
   };
 
@@ -235,6 +275,27 @@ export default function CourtBooking() {
     const today = new Date();
     const currentHour = today.getHours();
 
+    // If we have backend data, use it; otherwise fall back to basic logic
+    if (availableTimeSlots.length > 0) {
+      return availableTimeSlots.map((slot) => {
+        const hour = parseInt(slot.startTime.split(":")[0]);
+        const isPast =
+          selectedDateObj.toDateString() === today.toDateString() &&
+          hour <= currentHour;
+
+        return {
+          time: slot.startTime,
+          available: !isPast && slot.isAvailable,
+          isPast,
+          reason: slot.reason,
+          conflictingInfo: slot.conflictingInfo,
+          endTime: slot.endTime,
+          duration: slot.duration,
+        };
+      });
+    }
+
+    // Fallback to basic logic when backend data is not available
     return timeSlots.map((time) => {
       const hour = parseInt(time.split(":")[0]);
       const isPast =
@@ -245,6 +306,10 @@ export default function CourtBooking() {
         time,
         available: !isPast,
         isPast,
+        reason: null,
+        conflictingInfo: null,
+        endTime: `${(hour + 1).toString().padStart(2, "0")}:00`,
+        duration: 1,
       };
     });
   };
@@ -261,7 +326,9 @@ export default function CourtBooking() {
       selectedCourts.length === 0 ||
       !selectedSport
     ) {
-      setError("Please fill in all required fields");
+      setError(
+        "Please select a date, time slot, sport, and at least one court"
+      );
       return;
     }
 
@@ -271,6 +338,37 @@ export default function CourtBooking() {
 
       const token = await user.getIdToken();
 
+      // First check availability
+      const availabilityResponse = await axios.post(
+        `${API_BASE_URL}/api/bookings/check-availability`,
+        {
+          groundId,
+          sport: selectedSport,
+          date: selectedDate,
+          startTime,
+          duration,
+          selectedCourts,
+          numberOfPlayers,
+          specialRequests,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!availabilityResponse.data.data.available) {
+        setError(
+          availabilityResponse.data.data.message ||
+            "Selected time slot is not available"
+        );
+        // Refresh available time slots
+        await fetchAvailableTimeSlots();
+        return;
+      }
+
+      // If available, create the booking
       const response = await axios.post(
         `${API_BASE_URL}/api/bookings`,
         {
@@ -293,10 +391,24 @@ export default function CourtBooking() {
       if (response.data.success) {
         setBookingData(response.data.data.booking);
         setShowPaymentModal(true);
+        // Refresh available time slots after successful booking
+        await fetchAvailableTimeSlots();
       }
     } catch (error) {
       console.error("Error creating booking:", error);
-      setError(error.response?.data?.message || "Failed to create booking");
+      if (error.response?.data?.errorCode === "TIME_SLOT_UNAVAILABLE") {
+        setError(
+          "Selected time slot is not available. Please choose another time."
+        );
+        // Refresh available time slots
+        await fetchAvailableTimeSlots();
+      } else if (error.response?.data?.errorCode === "USER_DOUBLE_BOOKING") {
+        setError(
+          "You already have a booking at this time. Please choose a different time slot."
+        );
+      } else {
+        setError(error.response?.data?.message || "Failed to create booking");
+      }
     } finally {
       setIsCreatingBooking(false);
     }
@@ -383,9 +495,9 @@ export default function CourtBooking() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pt-28 bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <header className=" px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
@@ -395,10 +507,6 @@ export default function CourtBooking() {
               <ChevronLeft className="w-6 h-6" />
             </button>
             <h1 className="text-xl font-semibold text-gray-900">Book Court</h1>
-          </div>
-          <div className="flex items-center space-x-2 text-gray-600">
-            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-            <span>{userProfile?.displayName || user?.email}</span>
           </div>
         </div>
       </header>
@@ -460,6 +568,8 @@ export default function CourtBooking() {
                         setSelectedCourts(
                           generateDefaultCourts(e.target.value)
                         );
+                        // Clear start time when sport changes
+                        setStartTime("");
                       }}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none bg-white"
                     >
@@ -488,31 +598,6 @@ export default function CourtBooking() {
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                     <Calendar className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
-                  </div>
-                </div>
-
-                {/* Start Time */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Time *
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none bg-white"
-                    >
-                      <option value="">Select Start Time</option>
-                      {getAvailableTimeSlots()
-                        .filter((slot) => slot.available)
-                        .map((slot) => (
-                          <option key={slot.time} value={slot.time}>
-                            {slot.time}
-                          </option>
-                        ))}
-                    </select>
-                    <Clock className="absolute right-10 top-3 w-5 h-5 text-gray-400" />
-                    <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
                   </div>
                 </div>
 
@@ -698,32 +783,123 @@ export default function CourtBooking() {
 
             {/* Available Time Slots */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-4">
-                Available Time Slots
-              </h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">
+                  Select Time Slot *
+                </h3>
+                <button
+                  onClick={fetchAvailableTimeSlots}
+                  disabled={checkingAvailability}
+                  className="text-xs text-green-600 hover:text-green-700 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center gap-1"
+                  title="Refresh available time slots"
+                >
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  Refresh
+                </button>
+              </div>
               <p className="text-xs text-gray-500 mb-4">
-                Select your preferred start time
+                Click on an available time slot to select your start time
               </p>
 
-              <div className="grid grid-cols-2 gap-2">
-                {getAvailableTimeSlots().map((slot) => (
-                  <button
-                    key={slot.time}
-                    className={`p-2 text-sm rounded-lg border transition-colors
-                      ${
-                        slot.time === startTime
-                          ? "bg-green-500 text-white border-green-500"
-                          : !slot.available
-                          ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-green-50"
-                      }`}
-                    disabled={!slot.available}
-                    onClick={() => slot.available && setStartTime(slot.time)}
-                  >
-                    {slot.time}
-                  </button>
-                ))}
-              </div>
+              {checkingAvailability ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-green-500 animate-spin mr-2" />
+                  <span className="text-gray-600">
+                    Checking availability...
+                  </span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {getAvailableTimeSlots().map((slot) => {
+                    // Determine the appropriate styling based on slot status
+                    let buttonClass =
+                      "p-2 text-sm rounded-lg border transition-colors ";
+                    let tooltipText = "";
+
+                    if (slot.time === startTime) {
+                      buttonClass += "bg-green-500 text-white border-green-500";
+                      tooltipText = "Selected time slot";
+                    } else if (slot.isPast) {
+                      buttonClass +=
+                        "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+                      tooltipText = "Time slot is in the past";
+                    } else if (!slot.available) {
+                      if (slot.reason === "Booked") {
+                        buttonClass +=
+                          "bg-red-100 text-red-600 border-red-200 cursor-not-allowed";
+                        tooltipText = `Booked from ${slot.conflictingInfo?.[0]?.startTime} to ${slot.conflictingInfo?.[0]?.endTime}`;
+                      } else if (slot.reason === "Blocked") {
+                        buttonClass +=
+                          "bg-orange-100 text-orange-600 border-orange-200 cursor-not-allowed";
+                        tooltipText = `Blocked: ${
+                          slot.conflictingInfo?.[0]?.reason || "Maintenance"
+                        }`;
+                      } else {
+                        buttonClass +=
+                          "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+                        tooltipText = "Time slot is not available";
+                      }
+                    } else {
+                      buttonClass +=
+                        "bg-white text-gray-700 border-gray-300 hover:bg-green-50 hover:border-green-300";
+                      tooltipText = `Available: ${slot.time} - ${slot.endTime}`;
+                    }
+
+                    return (
+                      <button
+                        key={slot.time}
+                        className={buttonClass}
+                        disabled={!slot.available || slot.isPast}
+                        onClick={() =>
+                          slot.available &&
+                          !slot.isPast &&
+                          setStartTime(slot.time)
+                        }
+                        title={tooltipText}
+                      >
+                        <div className="text-center">
+                          <div className="font-medium">{slot.time}</div>
+                          {!slot.available && slot.reason && (
+                            <div className="text-xs opacity-75">
+                              {slot.reason === "Booked" ? "🔒" : "🚫"}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Selected Time Display */}
+              {startTime && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <span className="font-medium">Selected Start Time:</span>{" "}
+                    {startTime}
+                  </p>
+                </div>
+              )}
+
+              {availableTimeSlots.length === 0 && !checkingAvailability && (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500">
+                    No available time slots for this date
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Booking Summary */}

@@ -15,6 +15,8 @@ import {
   cancelBooking,
   getBookingDetails,
   getAllOwnerBookings,
+  checkAvailability,
+  getAvailableTimeSlots,
 } from "../controllers/bookingController.js";
 
 const router = express.Router();
@@ -171,6 +173,21 @@ const queryValidation = [
 // @desc    Create a new booking
 // @access  Private
 router.post("/", createBookingValidation, validateRequest, createBooking);
+
+// @route   POST /api/bookings/check-availability
+// @desc    Check time slot availability before booking
+// @access  Private
+router.post(
+  "/check-availability",
+  createBookingValidation,
+  validateRequest,
+  checkAvailability
+);
+
+// @route   GET /api/bookings/available-slots/:groundId
+// @desc    Get available time slots for a ground on a specific date
+// @access  Private
+router.get("/available-slots/:groundId", getAvailableTimeSlots);
 
 // @route   POST /api/bookings/verify-payment
 // @desc    Verify payment and confirm booking

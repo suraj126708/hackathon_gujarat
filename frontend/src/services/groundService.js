@@ -1,7 +1,7 @@
 // services/groundService.js
 import { authService } from "../firebase/firebase";
 
-const API_BASE_URL = "https://hackathon-gujarat.onrender.com/api";
+const API_BASE_URL = "http://localhost:5000/api";
 
 // Helper function to get auth headers
 const getAuthHeaders = async () => {

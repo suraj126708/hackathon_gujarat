@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaCamera, FaCheck, FaTimes } from "react-icons/fa";
 import { ArrowLeft } from "lucide-react";
@@ -164,8 +164,7 @@ const Register = () => {
       // Send OTP to email
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_BASE_URL ||
-          "https://hackathon-gujarat.onrender.com/api"
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
         }/otp/send-email`,
         {
           method: "POST",
