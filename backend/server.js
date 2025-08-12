@@ -32,7 +32,7 @@ const corsOptions = {
       "http://127.0.0.1:3000",
       "http://127.0.0.1:5173",
       "http://127.0.0.1:4173",
-      "https://hackathon-gujarat.vercel.app/",
+      "https://hackathon-gujarat.vercel.app", // Removed trailing slash
     ];
 
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -67,6 +67,16 @@ app.use((req, res, next) => {
 
   // Handle preflight requests
   if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Firebase-AppCheck"
+    );
+    res.setHeader("Access-Control-Allow-Credentials", "true");
     res.status(200).end();
     return;
   }
