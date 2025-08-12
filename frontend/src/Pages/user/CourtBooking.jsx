@@ -159,7 +159,10 @@ export default function CourtBooking() {
       }
     } catch (error) {
       console.error("Error fetching available time slots:", error);
-      // Don't show error for availability check, just log it
+      // Show error to user when availability check fails
+      setError(
+        "Unable to check slot availability. Please try again or contact support."
+      );
       setAvailableTimeSlots([]);
     } finally {
       setCheckingAvailability(false);
@@ -296,6 +299,8 @@ export default function CourtBooking() {
     }
 
     // Fallback to basic logic when backend data is not available
+    // IMPORTANT: When backend data is unavailable, we should NOT allow slot selection
+    // to prevent double bookings. Only show past slots as unavailable.
     return timeSlots.map((time) => {
       const hour = parseInt(time.split(":")[0]);
       const isPast =
@@ -304,9 +309,9 @@ export default function CourtBooking() {
 
       return {
         time,
-        available: !isPast,
+        available: false, // ← Changed: Don't allow selection when backend data unavailable
         isPast,
-        reason: null,
+        reason: "Backend Unavailable", // ← Added: Reason why slot can't be selected
         conflictingInfo: null,
         endTime: `${(hour + 1).toString().padStart(2, "0")}:00`,
         duration: 1,
@@ -836,7 +841,12 @@ export default function CourtBooking() {
                         "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
                       tooltipText = "Time slot is in the past";
                     } else if (!slot.available) {
-                      if (slot.reason === "Booked") {
+                      if (slot.reason === "Backend Unavailable") {
+                        buttonClass +=
+                          "bg-yellow-100 text-yellow-600 border-yellow-200 cursor-not-allowed";
+                        tooltipText =
+                          "Availability check failed. Please refresh.";
+                      } else if (slot.reason === "Booked") {
                         buttonClass +=
                           "bg-red-100 text-red-600 border-red-200 cursor-not-allowed";
                         tooltipText = `Booked from ${slot.conflictingInfo?.[0]?.startTime} to ${slot.conflictingInfo?.[0]?.endTime}`;
@@ -873,7 +883,13 @@ export default function CourtBooking() {
                           <div className="font-medium">{slot.time}</div>
                           {!slot.available && slot.reason && (
                             <div className="text-xs opacity-75">
-                              {slot.reason === "Booked" ? "🔒" : "🚫"}
+                              {slot.reason === "Booked"
+                                ? "🔒"
+                                : slot.reason === "Blocked"
+                                ? "🚫"
+                                : slot.reason === "Backend Unavailable"
+                                ? "⚠️"
+                                : "❌"}
                             </div>
                           )}
                         </div>
@@ -896,8 +912,20 @@ export default function CourtBooking() {
               {availableTimeSlots.length === 0 && !checkingAvailability && (
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-500">
-                    No available time slots for this date
+                    {error &&
+                    error.includes("Unable to check slot availability")
+                      ? "Slot availability check failed. Please refresh or try again later."
+                      : "No available time slots for this date"}
                   </p>
+                  {error &&
+                    error.includes("Unable to check slot availability") && (
+                      <button
+                        onClick={fetchAvailableTimeSlots}
+                        className="mt-2 text-xs text-green-600 hover:text-green-700 underline"
+                      >
+                        Retry availability check
+                      </button>
+                    )}
                 </div>
               )}
             </div>
