@@ -215,7 +215,7 @@ const AddGround = () => {
       setSubmitError("");
 
       const response = await axios.put(
-        `http://localhost:5000/api/auth/profile`,
+        `https://hackathon-gujarat.onrender.com/api/auth/profile`,
         { role: "Facility Owner" },
         {
           headers: {
@@ -336,7 +336,7 @@ const AddGround = () => {
       console.log("Submitting ground data:", submitData);
 
       const response = await axios.post(
-        `http://localhost:5000/api/grounds`,
+        `https://hackathon-gujarat.onrender.com/api/grounds`,
         submitData,
         {
           headers: {
@@ -392,7 +392,7 @@ const AddGround = () => {
       });
 
       const response = await axios.post(
-        `http://localhost:5000/api/images/upload-ground`,
+        `https://hackathon-gujarat.onrender.com/api/images/upload-ground`,
         formData,
         {
           headers: {

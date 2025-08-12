@@ -73,7 +73,8 @@ const OTPVerification = () => {
       // Verify OTP with backend
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+          import.meta.env.VITE_API_BASE_URL ||
+          "https://hackathon-gujarat.onrender.com/api"
         }/otp/verify-email`,
         {
           method: "POST",
@@ -106,7 +107,7 @@ const OTPVerification = () => {
               const uploadResponse = await fetch(
                 `${
                   import.meta.env.VITE_API_BASE_URL ||
-                  "http://localhost:5000/api"
+                  "https://hackathon-gujarat.onrender.com/api"
                 }/images/upload-profile`,
                 {
                   method: "POST",
@@ -163,7 +164,8 @@ const OTPVerification = () => {
       // Call backend to resend OTP
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+          import.meta.env.VITE_API_BASE_URL ||
+          "https://hackathon-gujarat.onrender.com/api"
         }/otp/send-email`,
         {
           method: "POST",

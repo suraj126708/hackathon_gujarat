@@ -39,7 +39,8 @@ googleProvider.setCustomParameters({
 
 // Configure axios defaults
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://hackathon-gujarat.onrender.com/api";
 axios.defaults.baseURL = API_BASE_URL;
 
 // Auth service class

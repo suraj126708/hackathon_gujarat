@@ -8,6 +8,9 @@
 
 **Team No:** 90
 
+Deploplyed URL : https://hackathon-gujarat.vercel.app/
+( this may take a time sometimes because we have used a render for backend and it has the buffer of 50s if not active for an hour)
+
 ---
 
 ## Project Overview

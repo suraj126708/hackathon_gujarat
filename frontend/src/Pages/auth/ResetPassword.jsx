@@ -64,7 +64,7 @@ const ResetPassword = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/reset-password",
+        "https://hackathon-gujarat.onrender.com/api/auth/reset-password",
         {
           method: "POST",
           headers: {

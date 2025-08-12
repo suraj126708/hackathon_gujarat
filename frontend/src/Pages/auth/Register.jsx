@@ -164,7 +164,8 @@ const Register = () => {
       // Send OTP to email
       const response = await fetch(
         `${
-          import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
+          import.meta.env.VITE_API_BASE_URL ||
+          "https://hackathon-gujarat.onrender.com/api"
         }/otp/send-email`,
         {
           method: "POST",
